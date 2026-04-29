@@ -125,13 +125,13 @@ const SignupForm = () => {
                   Select role
                 </option>
                 <option
-                  value="Learner"
+                  value="LEARNER"
                   className="bg-background text-foreground-muted"
                 >
                   Learner
                 </option>
                 <option
-                  value="Creator"
+                  value="CREATOR"
                   className="bg-background text-foreground-muted"
                 >
                   Creator

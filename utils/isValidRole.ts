@@ -1,7 +1,7 @@
 enum Role {
-  Learner = 'learner',
-  Creator = 'creator',
-  Admin = 'admin',
+  LEARNER = 'LEARNER',
+  CREATOR = 'CREATOR',
+  ADMIN = 'ADMIN',
 }
 
 export const isValidRole = (role: unknown): role is Role => {
