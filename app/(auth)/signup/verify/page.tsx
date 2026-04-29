@@ -2,13 +2,14 @@
 
 import Container from '@/components/common/Container';
 import { useSignUp } from '@clerk/nextjs/legacy';
-import { Button, InputOTP, Label, Link } from '@heroui/react';
+import { Button, InputOTP, Label, Link, Spinner } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 const Verify = () => {
   const [value, setValue] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const { signUp, isLoaded, setActive } = useSignUp();
@@ -17,6 +18,8 @@ const Verify = () => {
 
   const verify = async () => {
     try {
+      setLoading(true);
+
       const result = await signUp.attemptEmailAddressVerification({
         code: value,
       });
@@ -38,6 +41,8 @@ const Verify = () => {
         error.errors[0].message || 'An error occurred during verification',
       );
       setError('An error occurred during verification. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -78,8 +83,16 @@ const Verify = () => {
           onClick={verify}
           variant="primary"
           className={'bg-orange-400 text-white font-semibold mt-10 px-6 py-2'}
+          isDisabled={loading || value.length !== 6}
         >
-          Verify
+          {loading ? (
+            <div className="flex items-center gap-2 justify-center">
+              <Spinner color="current" size="sm" />
+              <p>Verifying...</p>
+            </div>
+          ) : (
+            'Verify'
+          )}
         </Button>
 
         <p className="text-red-500 text-sm font-medium mt-5">{error}</p>

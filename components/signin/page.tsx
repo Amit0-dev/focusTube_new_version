@@ -1,7 +1,7 @@
 'use client';
 
 import { useSignIn } from '@clerk/nextjs/legacy';
-import { Button, Card, Link } from '@heroui/react';
+import { Button, Card, Link, Spinner } from '@heroui/react';
 import { Form, Input, Label, TextField } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
@@ -26,6 +26,7 @@ const SigninForm = () => {
   });
 
   const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
   const { signIn, isLoaded, setActive } = useSignIn();
 
   const router = useRouter();
@@ -36,6 +37,8 @@ const SigninForm = () => {
 
   const onSubmit: SubmitHandler<SigninFormData> = async (data) => {
     try {
+      setLoading(true);
+
       const result = await signIn?.create({
         identifier: data.email,
         password: data.password,
@@ -60,6 +63,8 @@ const SigninForm = () => {
         error.errors[0].message || 'An error occurred during sign in',
       );
       setError(error.errors[0].message || 'An error occurred during sign in');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -106,8 +111,14 @@ const SigninForm = () => {
             type="submit"
             isDisabled={false}
           >
-            {/* {isLoggingIn ? 'Signing...' : 'Sign In'} */}
-            Sign In
+            {loading ? (
+              <div className="flex items-center gap-2 justify-center">
+                <Spinner color="current" size="sm" />
+                <p>Signing In...</p>
+              </div>
+            ) : (
+              'Sign In'
+            )}
           </Button>
 
           {error && (

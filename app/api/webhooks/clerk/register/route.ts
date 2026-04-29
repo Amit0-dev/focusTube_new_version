@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma';
-import { isValidRole } from '@/utils/isValidRole';
-import { WebhookEvent } from '@clerk/nextjs/server';
+import { roleMap } from '@/utils/role';
+import { WebhookEvent, clerkClient } from '@clerk/nextjs/server';
 import { headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { Webhook } from 'svix';
@@ -33,6 +33,8 @@ export async function POST(req: NextRequest) {
 
     const body = JSON.stringify(payload);
 
+    console.log('Received webhook payload:', body);
+
     const webhook = new Webhook(WEBHOOK_SECRET);
 
     let evt: WebhookEvent;
@@ -64,6 +66,7 @@ export async function POST(req: NextRequest) {
           primary_email_address_id,
           first_name,
           unsafe_metadata,
+          id: userId,
         } = evt.data;
 
         const primaryEmail = email_addresses.find(
@@ -82,9 +85,23 @@ export async function POST(req: NextRequest) {
         console.log('First Name:', first_name);
         console.log('Unsafe Metadata:', unsafe_metadata);
 
-        const userRoleRaw = unsafe_metadata.role;
+        const rawRole = unsafe_metadata.role;
 
-        const userRole = isValidRole(userRoleRaw) ? userRoleRaw : undefined;
+        if (!rawRole || typeof rawRole !== 'string') {
+          throw new Error('Invalid role');
+        }
+
+        const normalizedRole = rawRole.toLowerCase();
+
+        if (
+          normalizedRole !== 'learner' &&
+          normalizedRole !== 'creator' &&
+          normalizedRole !== 'admin'
+        ) {
+          throw new Error('Invalid role');
+        }
+
+        const userRole = roleMap[normalizedRole];
 
         console.log('User Role:', userRole);
 
@@ -104,6 +121,21 @@ export async function POST(req: NextRequest) {
             role: userRole,
           },
         });
+
+        // add role in public metadata in clerk dashboard & remove from unsafe metadata
+
+        const client = await clerkClient();
+
+        const response = await client.users.updateUserMetadata(userId, {
+          publicMetadata: {
+            role: userRole,
+          },
+          unsafeMetadata: {
+            role: null,
+          },
+        });
+
+        console.log('Clerk update response:', response.publicMetadata);
 
         console.log('User created in database:', user);
       } catch (error) {

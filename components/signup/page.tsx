@@ -3,6 +3,7 @@
 import { useSignUp } from '@clerk/nextjs/legacy';
 import { Button, Card, Link } from '@heroui/react';
 import { Form, Input, Label, TextField } from '@heroui/react';
+import { Spinner } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -15,8 +16,8 @@ const SignupForm = () => {
     email: z.email('Invalid email address'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
     role: z.enum(
-      ['Learner', 'Creator'],
-      "Role must be either 'Learner' or 'Creator'",
+      ['LEARNER', 'CREATOR'],
+      "Role must be either 'LEARNER' or 'CREATOR'",
     ),
   });
 
@@ -32,6 +33,7 @@ const SignupForm = () => {
 
   const { isLoaded, signUp } = useSignUp();
   const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
 
   if (!isLoaded) {
@@ -40,6 +42,8 @@ const SignupForm = () => {
 
   const onSubmit: SubmitHandler<SignupFormData> = async (data) => {
     try {
+      setLoading(true);
+
       await signUp?.create({
         emailAddress: data.email,
         firstName: data.name,
@@ -55,12 +59,14 @@ const SignupForm = () => {
 
       // redirect to the verification page
 
-      router.push('/signup/verify-email');
+      router.push('/signup/verify');
     } catch (error: any) {
       console.log(
         error.errors[0].message || 'An error occurred during sign up',
       );
       setError(error.errors[0].message || 'An error occurred during sign up');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -150,8 +156,14 @@ const SignupForm = () => {
             type="submit"
             isDisabled={false}
           >
-            {/* {isSigningUp ? "Signing Up..." : "Sign Up"} */}
-            Sign Up
+            {loading ? (
+              <div className="flex items-center gap-2 justify-center">
+                <Spinner color="current" size="sm" />
+                <p>Signing Up...</p>
+              </div>
+            ) : (
+              'Sign Up'
+            )}
           </Button>
           {error && (
             <p className="text-red-500 text-xs text-center mt-2">{error}</p>
