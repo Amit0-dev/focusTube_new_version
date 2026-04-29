@@ -5,6 +5,7 @@ import { Button, Card, Link } from '@heroui/react';
 import { Form, Input, Label, TextField } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { type SubmitHandler, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -29,8 +30,13 @@ const SignupForm = () => {
     resolver: zodResolver(SignupSchema),
   });
 
-  const { isLoaded, signUp, setActive } = useSignUp();
+  const { isLoaded, signUp } = useSignUp();
+  const [error, setError] = useState<string>('');
   const router = useRouter();
+
+  if (!isLoaded) {
+    return null;
+  }
 
   const onSubmit: SubmitHandler<SignupFormData> = async (data) => {
     try {
@@ -49,11 +55,12 @@ const SignupForm = () => {
 
       // redirect to the verification page
 
-      router.push('/verify');
+      router.push('/signup/verify-email');
     } catch (error: any) {
       console.log(
         error.errors[0].message || 'An error occurred during sign up',
       );
+      setError(error.errors[0].message || 'An error occurred during sign up');
     }
   };
 
@@ -146,6 +153,9 @@ const SignupForm = () => {
             {/* {isSigningUp ? "Signing Up..." : "Sign Up"} */}
             Sign Up
           </Button>
+          {error && (
+            <p className="text-red-500 text-xs text-center mt-2">{error}</p>
+          )}
 
           <p className="text-center text-xs text-neutral-500">
             Already have an account?{' '}

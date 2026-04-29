@@ -1,8 +1,11 @@
 'use client';
 
+import { useSignIn } from '@clerk/nextjs/legacy';
 import { Button, Card, Link } from '@heroui/react';
 import { Form, Input, Label, TextField } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -22,8 +25,42 @@ const SigninForm = () => {
     resolver: zodResolver(signinSchema),
   });
 
+  const [error, setError] = useState<string>('');
+  const { signIn, isLoaded, setActive } = useSignIn();
+
+  const router = useRouter();
+
+  if (!isLoaded) {
+    return null;
+  }
+
   const onSubmit: SubmitHandler<SigninFormData> = async (data) => {
-    // logic to sign in user with email and password using clerk
+    try {
+      const result = await signIn?.create({
+        identifier: data.email,
+        password: data.password,
+      });
+
+      if (result?.status !== 'complete') {
+        setError(
+          'Sign in failed. Please check your credentials and try again.',
+        );
+        return;
+      }
+
+      if (result?.status === 'complete') {
+        await setActive({
+          session: result.createdSessionId,
+        });
+
+        router.push('/dashboard');
+      }
+    } catch (error: any) {
+      console.log(
+        error.errors[0].message || 'An error occurred during sign in',
+      );
+      setError(error.errors[0].message || 'An error occurred during sign in');
+    }
   };
 
   return (
@@ -72,6 +109,11 @@ const SigninForm = () => {
             {/* {isLoggingIn ? 'Signing...' : 'Sign In'} */}
             Sign In
           </Button>
+
+          {error && (
+            <p className="text-red-500 text-xs text-center mt-2">{error}</p>
+          )}
+
           <Link className="text-center text-sm text-gray-400" href="#">
             Forgot password?
           </Link>
