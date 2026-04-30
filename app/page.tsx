@@ -7,8 +7,6 @@ export default function Home() {
     <div className="w-full min-h-screen xl:px-0 md:px-5 px-5">
       <Container>
         <div className="w-full h-full">
-          <NavBar />
-
           <div className="w-full pt-30 flex flex-col items-center justify-center">
             <h2 className="xl:text-6xl lg:text-5xl md:text-4xl text-2xl text-center font-semibold text-foreground">
               Turn YouTube Playlists into <br />{' '}

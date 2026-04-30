@@ -1,21 +1,40 @@
 'use client';
 
 import Container from '@/components/common/Container';
+import { getDashboardRoute } from '@/utils/getDashboard';
 import { useUser } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 const Setup = () => {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const router = useRouter();
 
-  const role = user?.publicMetadata?.role;
+  const role = user?.publicMetadata?.role as string | undefined;
+  console.log('User Role (Inside Setup page):', role);
 
+  const pathname = usePathname();
+
+  // TODO: Understand this logic (later) and optimize if possible
   useEffect(() => {
-    if (role === 'admin') router.push('/admin');
-    else if (role === 'creator') router.push('/creator');
-    else if (role === 'learner') router.push('/learner');
-  }, [role]);
+    if (!isLoaded) return;
+
+    // 🔁 Poll until role exists
+    if (!role) {
+      const interval = setInterval(() => {
+        user?.reload();
+      }, 1000);
+
+      return () => clearInterval(interval); // ✅ cleanup
+    }
+
+    const target = getDashboardRoute(role);
+
+    // 🚫 prevent same-route redirect loop
+    if (pathname === target) return;
+
+    router.replace(target);
+  }, [role, isLoaded, router, pathname, user]);
 
   return (
     <Container className="w-full h-screen flex items-center justify-center">

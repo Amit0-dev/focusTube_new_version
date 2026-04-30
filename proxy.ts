@@ -1,6 +1,8 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
+import { getDashboardRoute } from './utils/getDashboard';
+
 const isPublicRoute = createRouteMatcher([
   '/signin(.*)',
   '/signup(.*)',
@@ -8,12 +10,6 @@ const isPublicRoute = createRouteMatcher([
   '/setup(.*)',
   '/api/webhooks/clerk(.*)',
 ]);
-
-const getDashboardRoute = (role: string) => {
-  if (role === 'admin') return '/admin/dashboard';
-  if (role === 'creator') return '/creator/dashboard';
-  return '/learner/dashboard';
-};
 
 export default clerkMiddleware(async (auth, req) => {
   const { isAuthenticated, sessionClaims } = await auth();

@@ -151,6 +151,8 @@ const SignupForm = () => {
           </div>
         </Card.Content>
         <Card.Footer className="mt-4 flex flex-col gap-2">
+          {/* Clerk's CAPTCHA widget */}
+          <div id="clerk-captcha" />
           <Button
             className="w-full bg-foreground text-background"
             type="submit"
