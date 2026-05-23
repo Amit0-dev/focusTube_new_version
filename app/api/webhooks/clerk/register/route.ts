@@ -119,6 +119,7 @@ export async function POST(req: NextRequest) {
             email: primaryEmail?.email_address,
             name: first_name,
             role: userRole,
+            clerkUserId: userId,
           },
         });
 

@@ -7,7 +7,6 @@ const isPublicRoute = createRouteMatcher([
   '/signin(.*)',
   '/signup(.*)',
   '/',
-  "/api(.*)",
   '/setup(.*)',
   '/api/webhooks/clerk(.*)',
 ]);
@@ -25,11 +24,17 @@ export default clerkMiddleware(async (auth, req) => {
     rsc: req.headers.get('rsc'),
   });
 
+  const isApiRoute = pathname.startsWith('/api');
+
   if (!isPublicRoute(req) && !isAuthenticated) {
+    if (isApiRoute) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     return NextResponse.redirect(new URL('/signin', req.url));
   }
 
-  const role = sessionClaims?.metadata?.role?.toLowerCase();
+  const role = sessionClaims?.metadata?.role?.toString().toLowerCase();
 
   console.log('User Role (Inside middleware):', role);
 

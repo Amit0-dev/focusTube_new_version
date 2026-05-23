@@ -43,7 +43,7 @@ export default function TopNav({
         </button>
 
         <div className="flex flex-1 items-center justify-end gap-3">
-          <div className="relative w-full max-w-xl">
+          {/* <div className="relative w-full max-w-xl">
             <Search
               size={16}
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/50"
@@ -56,16 +56,16 @@ export default function TopNav({
                 'focus:outline-none focus:ring-2 focus:ring-orange-500/30',
               )}
             />
-          </div>
+          </div> */}
 
-          <button
+          {/* <button
             type="button"
             suppressHydrationWarning
             className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
             aria-label="Notifications"
           >
             <Bell size={18} />
-          </button>
+          </button> */}
 
           <Show when="signed-in">
             <div className="rounded-2xl border border-white/10 bg-white/5 px-2 py-1.5 hover:bg-white/10">

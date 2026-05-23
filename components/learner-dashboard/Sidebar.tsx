@@ -1,29 +1,22 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
-
+import { cn } from '@/lib/cn';
 import {
   Award,
-  Bookmark,
   BookMarked,
+  Bookmark,
   LayoutDashboard,
   ListVideo,
   Settings,
   StickyNote,
   TrendingUp,
 } from 'lucide-react';
-
-import { cn } from '@/lib/cn';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const navItems = [
-  { label: 'Dashboard', tab: 'dashboard', Icon: LayoutDashboard },
-  { label: 'My Progress', tab: 'progress', Icon: TrendingUp },
   { label: 'Playlists', tab: 'playlists', Icon: ListVideo },
-  { label: 'Saved Videos', tab: 'saved', Icon: BookMarked },
   { label: 'Notes', tab: 'notes', Icon: StickyNote },
-  { label: 'Bookmarks', tab: 'bookmarks', Icon: Bookmark },
-  { label: 'Certificates', tab: 'certificates', Icon: Award },
-  { label: 'Settings', tab: 'settings', Icon: Settings },
+  { label: 'Dashboard', tab: 'dashboard', Icon: LayoutDashboard },
 ] as const;
 
 export default function Sidebar({
@@ -37,13 +30,13 @@ export default function Sidebar({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const tab = searchParams.get('tab') ?? 'dashboard';
+  const tab = searchParams.get('tab') ?? 'playlists';
 
   function goToTab(nextTab: string) {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     nextSearchParams.set('tab', nextTab);
 
-    const url = nextTab === 'dashboard' ? '/learner/dashboard' : `/learner/dashboard?${nextSearchParams.toString()}`;
+    const url = `/learner/dashboard?${nextSearchParams.toString()}`;
     router.replace(url);
     onCloseMobile();
   }
@@ -52,7 +45,9 @@ export default function Sidebar({
     <aside
       className={cn(
         'scrollbar-hide fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto border-r border-white/10 bg-linear-to-b from-slate-950/80 to-slate-900/60 px-4 py-5 backdrop-blur-xl transition-[transform,opacity] duration-300 ease-out will-change-transform',
-        mobileOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0',
+        mobileOpen
+          ? 'translate-x-0 opacity-100'
+          : '-translate-x-full opacity-0',
         desktopHidden
           ? 'md:-translate-x-full md:opacity-0 md:pointer-events-none'
           : 'md:translate-x-0 md:opacity-100',
@@ -63,9 +58,9 @@ export default function Sidebar({
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => goToTab('dashboard')}
+            onClick={() => goToTab('playlists')}
             className="h-10 w-10 rounded-2xl bg-linear-to-br from-orange-500/30 to-amber-400/20 ring-1 ring-white/10"
-            aria-label="Go to Dashboard"
+            aria-label="Go to Playlists"
           />
           <div className="leading-tight">
             <div className="text-lg font-semibold text-white">StudyFlow</div>
@@ -120,7 +115,9 @@ export default function Sidebar({
         </div>
       </div>
 
-      <div className="mt-8 text-xs text-white/40">© {new Date().getFullYear()} StudyFlow</div>
+      <div className="mt-8 text-xs text-white/40">
+        © {new Date().getFullYear()} StudyFlow
+      </div>
     </aside>
   );
 }

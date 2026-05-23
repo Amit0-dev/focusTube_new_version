@@ -80,3 +80,17 @@ export interface PlaylistVideoType {
   channelTitle: string;
   position: number;
 }
+
+export interface Playlist {
+  id: string;
+  youtubePlaylistId: string;
+  userId: string;
+  title: string;
+  description?: string;
+  channelId: string;
+  publishedAt: Date;
+  thumbnail: string;
+  channelTitle: string;
+  kind: string;
+  itemCount: number;
+}

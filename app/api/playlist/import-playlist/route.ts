@@ -1,9 +1,12 @@
+import { requireRole } from '@/lib/auth/requireRole';
 import prisma from '@/lib/prisma';
 import { fetchPlaylist, fetchPlaylistVideos } from '@/youtubeApi';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest, res: NextResponse) {
   try {
+    const { clerkUserId } = await requireRole(['creator', 'learner']);
+
     const { playlistUrl } = await req.json();
 
     const regex =
@@ -46,10 +49,20 @@ export async function POST(req: NextRequest, res: NextResponse) {
       return NextResponse.json({ error: 'Invalid response' }, { status: 500 });
     }
 
+    const user = await prisma.user.findUnique({
+      where: {
+        clerkUserId,
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     const playlistObj = response.map((r) => ({
       kind: r.kind,
       youtubePlaylistId: r.id,
-      userId: '9723833f-b42e-44cb-9e52-ac3a5d86d80b', // TODO: replace with actual user id
+      userId: user.id,
       title: r.snippet.title,
       description: r.snippet.description,
       channelId: r.snippet.channelId,
@@ -69,6 +82,19 @@ export async function POST(req: NextRequest, res: NextResponse) {
 
     let createdPlaylist: any = null;
     try {
+      const existingPlaylist = await prisma.playlist.findUnique({
+        where: {
+          youtubePlaylistId: playlistId,
+        },
+      });
+
+      if (existingPlaylist) {
+        return NextResponse.json(
+          { error: 'Playlist already exists' },
+          { status: 400 },
+        );
+      }
+
       createdPlaylist = await prisma.playlist.create({
         data: playlistObj[0],
       });
