@@ -86,7 +86,7 @@ export interface Playlist {
   youtubePlaylistId: string;
   userId: string;
   title: string;
-  description?: string;
+  description: string | null;
   channelId: string;
   publishedAt: Date;
   thumbnail: string;

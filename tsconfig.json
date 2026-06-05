@@ -19,7 +19,10 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@/server/*": ["./server/*"],
+      "@dal/*": ["./server/dal/*"],
+      "@services/*": ["./server/services/*"],
     }
   },
   "include": [
