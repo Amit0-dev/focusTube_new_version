@@ -1,4 +1,3 @@
-import { getUserPlaylists } from '@/lib/services/playlist.service';
 import { ArrowRight, Flame, Play, Sparkles } from 'lucide-react';
 
 import CircularProgress from './CircularProgress';
@@ -7,7 +6,17 @@ import ProgressBar from './ProgressBar';
 import TagPill from './TagPill';
 
 export default async function Dashboard() {
-  const playlists = await getUserPlaylists();
+  const playlists = [
+    {
+      id: '1',
+      title: 'React State Management',
+      channelTitle: 'Code Academy',
+      thumbnail:
+        'https://i.ytimg.com/vi/35lXWvCuM8o/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLB2YjGQJHjN3w9sZyT1bXfQkzDg',
+
+      itemCount: 12,
+    },
+  ];
 
   return (
     <div className="space-y-6">

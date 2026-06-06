@@ -62,7 +62,7 @@ export async function getAllPlaylists(clerkUserId: string) {
       userId: clerkUserId,
     },
     orderBy: {
-      publishedAt: 'desc',
+      createdAt: 'desc',
     },
   });
   return playlists;

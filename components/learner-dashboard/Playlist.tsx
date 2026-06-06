@@ -1,11 +1,19 @@
-import { getUserPlaylists } from '@/lib/services/playlist.service';
-
 import DashboardCard from './DashboardCard';
 import ImportPlaylistCard from './ImportPlaylistCard';
 import SectionHeader from './SectionHeader';
 
 export default async function Playlist() {
-  const playlists = await getUserPlaylists();
+  const playlists = [
+    {
+      id: '1',
+      title: 'React State Management',
+      channelTitle: 'Code Academy',
+      thumbnail:
+        'https://i.ytimg.com/vi/35lXWvCuM8o/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLB2YjGQJHjN3w9sZyT1bXfQkzDg',
+
+      itemCount: 12,
+    },
+  ];
 
   return (
     <div className="space-y-7">
