@@ -68,10 +68,13 @@ export async function getAllPlaylists(clerkUserId: string) {
   return playlists;
 }
 
-export async function getPlaylistById(playlistId: string) {
+export async function getPlaylistById(playlistId: string, userId: string) {
   return await prisma.playlist.findUnique({
     where: {
       id: playlistId,
+      User: {
+        id: userId,
+      },
     },
   });
 }

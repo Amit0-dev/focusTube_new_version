@@ -5,6 +5,8 @@ import SectionHeader from '@/components/learner-dashboard/SectionHeader';
 import { Clock3, NotebookPen, PlayCircle, Trash2, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import Player from './Player';
+
 type PlaylistSummary = {
   id: string;
   title: string;
@@ -43,7 +45,9 @@ export default function PlaylistWorkspace({
   playlist: PlaylistSummary;
   videos: PlaylistVideo[];
 }) {
-  const [activeVideoId, setActiveVideoId] = useState(videos[0]?.id ?? '');
+  const [activeVideoId, setActiveVideoId] = useState(
+    videos[0]?.youtubeVideoId ?? '',
+  );
   const [noteDraft, setNoteDraft] = useState('');
   const [allNotesOpen, setAllNotesOpen] = useState(false);
   const [notesByVideo, setNotesByVideo] = useState<Record<string, NoteEntry[]>>(
@@ -51,14 +55,15 @@ export default function PlaylistWorkspace({
   );
 
   const activeVideo = useMemo(
-    () => videos.find((video) => video.id === activeVideoId) ?? videos[0],
+    () =>
+      videos.find((video) => video.youtubeVideoId === activeVideoId) ??
+      videos[0],
     [activeVideoId, videos],
   );
 
   const activeNotes = activeVideo ? (notesByVideo[activeVideo.id] ?? []) : [];
   const notesPreview = activeNotes.slice(0, 3);
-  const youtubeEmbedId = activeVideo?.youtubeVideoId || 'dQw4w9WgXcQ';
-  const youtubeEmbedSrc = `https://www.youtube-nocookie.com/embed/${youtubeEmbedId}?rel=0&modestbranding=1&playsinline=1&iv_load_policy=3`;
+
   const focusScore = Math.min(100, 28 + activeNotes.length * 18);
 
   function saveNote() {
@@ -125,13 +130,11 @@ export default function PlaylistWorkspace({
             </div>
 
             <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/50 ring-1 ring-orange-300/20">
-              <iframe
-                src={youtubeEmbedSrc}
-                title={activeVideo?.title ?? 'Playlist video player'}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                className="aspect-video w-full"
-                referrerPolicy="strict-origin-when-cross-origin"
+              <Player
+                videoId={activeVideo.id}
+                videoIdYt={activeVideo.youtubeVideoId}
+                videoTitle={activeVideo?.title}
+                playlistId={playlist.id}
               />
             </div>
 

@@ -28,7 +28,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  playlists Playlist[]
+  playlists     Playlist[]
+  VideoProgress VideoProgress[]
 }
 
 model Playlist {
@@ -47,7 +48,8 @@ model Playlist {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  video Video[]
+  video         Video[]
+  VideoProgress VideoProgress[]
 
   User User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -68,8 +70,30 @@ model Video {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  Note Note[]
+  Note          Note[]
+  VideoProgress VideoProgress[]
 
+  Playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+}
+
+model VideoProgress {
+  id         String @id @default(uuid())
+  videoId    String
+  userId     String
+  playlistId String
+
+  lastPlayTime  Float
+  lastPlayedAt DateTime
+  totalDuration Float
+
+  isComplete  Boolean   @default(false)
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Video    Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  User     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   Playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
 }
 

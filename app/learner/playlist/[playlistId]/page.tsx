@@ -15,9 +15,6 @@ export default async function PlaylistVideos({
     const videos = await getVideosByPlaylistIdService(playlistId);
     const playlist = await getPlaylistByIdService(playlistId);
 
-    console.log('Fetched playlist videos - ', videos);
-    console.log('Fetched playlist - ', playlist);
-
     if (!playlist) {
       return (
         <div className="space-y-6">
