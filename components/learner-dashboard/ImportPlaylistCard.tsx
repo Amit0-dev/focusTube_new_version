@@ -1,7 +1,5 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   AlertCircle,
   ArrowRight,
@@ -11,6 +9,8 @@ import {
   Loader2,
   X,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 
 function isLikelyYouTubePlaylistUrl(url: string) {
   const trimmed = url.trim();
@@ -20,10 +20,10 @@ function isLikelyYouTubePlaylistUrl(url: string) {
   );
 }
 
+// TODO: add better error handling and proper error message show on frontend
+
 export default function ImportPlaylistCard() {
   const router = useRouter();
-
-  const USE_MOCK_IMPORT = true;
 
   const [isOpen, setIsOpen] = useState(false);
   const [playlistUrl, setPlaylistUrl] = useState('');
@@ -82,29 +82,15 @@ export default function ImportPlaylistCard() {
     setImportSuccess(null);
 
     try {
-      if (USE_MOCK_IMPORT) {
-        await new Promise((r) => setTimeout(r, 1200));
-        setImportSuccess('Playlist imported.');
-        setPlaylistUrl('');
-        setStatus('success');
-        router.refresh();
-        return;
-      }
-
       const res = await fetch('/api/playlist/import-playlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ playlistUrl: playlistUrl.trim() }),
       });
 
-      type ImportResponse = { error?: string; message?: string };
+      const data = await res.json();
 
-      let data: ImportResponse = {};
-      try {
-        data = (await res.json()) as ImportResponse;
-      } catch {
-        data = {};
-      }
+      console.log('Import response:', { res, data });
 
       if (!res.ok) {
         setImportError(data?.error ?? 'Failed to import playlist.');
@@ -128,6 +114,7 @@ export default function ImportPlaylistCard() {
     <div className="flex flex-wrap items-center gap-3">
       <button
         type="button"
+        disabled={importLoading}
         onClick={() => {
           setIsOpen(true);
           setImportError(null);
@@ -179,7 +166,8 @@ export default function ImportPlaylistCard() {
                     Import a playlist
                   </h3>
                   <p className="mt-1 text-sm text-white/60">
-                    Paste a YouTube playlist URL to add it to your learning queue.
+                    Paste a YouTube playlist URL to add it to your learning
+                    queue.
                   </p>
                 </div>
                 <button
@@ -220,7 +208,8 @@ export default function ImportPlaylistCard() {
 
                 {!!playlistUrl.trim() && !canImport && (
                   <div className="text-xs text-amber-200/90">
-                    Paste a valid YouTube playlist link (it should contain “list=...”).
+                    Paste a valid YouTube playlist link (it should contain
+                    “list=...”).
                   </div>
                 )}
 

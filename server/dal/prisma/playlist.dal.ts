@@ -67,3 +67,11 @@ export async function getAllPlaylists(clerkUserId: string) {
   });
   return playlists;
 }
+
+export async function getPlaylistById(playlistId: string) {
+  return await prisma.playlist.findUnique({
+    where: {
+      id: playlistId,
+    },
+  });
+}

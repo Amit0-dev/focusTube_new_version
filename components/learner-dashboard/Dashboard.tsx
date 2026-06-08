@@ -153,44 +153,6 @@ export default async function Dashboard() {
           </DashboardCard>
         </div>
       </div>
-
-      <section className="space-y-3">
-        <div className="flex items-end justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-white">Playlists</h3>
-            <p className="text-sm text-white/60">
-              Pick up where you left off or start something new.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex gap-4 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:grid md:grid-cols-2 md:overflow-visible lg:grid-cols-3">
-          {playlists.map((p) => (
-            <DashboardCard
-              key={p.id}
-              className="min-w-65 shrink-0 p-4 transition hover:-translate-y-0.5 hover:bg-white/10 md:min-w-0"
-            >
-              <div className="h-28 w-full rounded-2xl border border-white/10 bg-linear-to-br from-orange-500/20 to-amber-400/10" />
-
-              <div className="mt-4 flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-sm font-semibold text-white">
-                    {p.title}
-                  </div>
-                  <div className="mt-1 text-xs text-white/60">
-                    {p.channelTitle}
-                  </div>
-                </div>
-                <TagPill tag={'New'} />
-              </div>
-
-              <div className="mt-3 text-xs text-white/60">
-                {p.itemCount} videos
-              </div>
-            </DashboardCard>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }
