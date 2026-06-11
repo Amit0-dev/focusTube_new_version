@@ -8,7 +8,7 @@ export async function getAllVideosByPlaylistId(playlistId: string) {
     },
     orderBy: {
       position: 'asc',
-    }
+    },
   });
 }
 
@@ -26,6 +26,32 @@ export async function getVideoById(
           id: userId,
         },
       },
+    },
+  });
+}
+
+export async function updateVideoById(
+  videoId: string,
+  playlistId: string,
+  userId: string,
+  data: {
+    isComplete: boolean;
+    completedAt: Date;
+  },
+) {
+  return await prisma.video.update({
+    where: {
+      id: videoId,
+      Playlist: {
+        id: playlistId,
+        User: {
+          id: userId,
+        },
+      },
+    },
+    data: {
+      isComplete: data.isComplete,
+      completedAt: data.completedAt,
     },
   });
 }

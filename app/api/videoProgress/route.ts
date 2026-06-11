@@ -1,11 +1,14 @@
 import { requireRole } from '@/lib/auth/requireRole';
+import { markPlaylistAsInProgress } from '@/server/dal/prisma/playlist.dal';
 import { findUserByClerkUserId } from '@/server/dal/prisma/user.dal';
+import { updateVideoById } from '@/server/dal/prisma/video.dal';
 import {
   createVideoProgress,
   getVideoProgress,
 } from '@/server/dal/prisma/videoProgress';
-import { updateVideoProgress } from '@/server/dal/prisma/videoProgress';
+import { updatePlaylistByIdService } from '@/server/services/playlist.service';
 import { checkVideoAndPlaylist } from '@/server/services/video.service';
+import { updateVideoProgressService } from '@/server/services/videoProgress.service';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -98,6 +101,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // mark playlist as in progress if not already marked as in progress
+    await markPlaylistAsInProgress(playlistId, user.id);
+
     return NextResponse.json(
       { message: 'Video progress created successfully' },
       { status: 201 },
@@ -146,6 +152,19 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
+    // check either this video is already marked as completed or not
+
+    const isAlreadyCompleted = isVideoProgressExists.isComplete;
+
+    if (isAlreadyCompleted) {
+      return NextResponse.json(
+        {
+          message: 'Video is already marked as completed',
+        },
+        { status: 200 },
+      );
+    }
+
     // check either video is complete or not
 
     if (isCompleted) {
@@ -156,14 +175,45 @@ export async function PATCH(req: NextRequest) {
       if (shouldItMarkCompleted) {
         isCompleted = true;
 
-        await updateVideoProgress({
+        const response = await updateVideoProgressService({
           currentTime,
           isComplete: isCompleted,
           id: isVideoProgressExists.id,
           userId: user.id,
         });
 
-        // TODO: Also increment the completed videos count in the playlist also check whether the playlist is completed or not if all videos are completed then mark the playlist as completed as well.
+        if (!response) {
+          return NextResponse.json(
+            {
+              error: 'Failed to update video progress',
+            },
+            { status: 500 },
+          );
+        }
+
+        // now update the video iscomplete to true and completed at to current time
+
+        const videoUpdateResponse = await updateVideoById(
+          videoId,
+          playlistId,
+          user.id,
+          {
+            isComplete: true,
+            completedAt: new Date(),
+          },
+        );
+
+        if (!videoUpdateResponse) {
+          return NextResponse.json(
+            {
+              error: 'Failed to update video',
+            },
+            { status: 500 },
+          );
+        }
+
+        // and now update the playlist completed videos count and if all videos are completed then mark playlist as completed and set completed at to current time
+        await updatePlaylistByIdService(playlistId, user.id);
 
         return NextResponse.json(
           {
@@ -177,7 +227,7 @@ export async function PATCH(req: NextRequest) {
 
     // now update the video progress with current time and completion status
 
-    const updatedVideoProgress = await updateVideoProgress({
+    const updatedVideoProgress = await updateVideoProgressService({
       currentTime,
       isComplete: isCompleted,
       id: isVideoProgressExists.id,

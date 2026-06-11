@@ -36,7 +36,7 @@ export default function Sidebar({
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     nextSearchParams.set('tab', nextTab);
 
-    const url = `/learner/dashboard?${nextSearchParams.toString()}`;
+    const url = `/learner?${nextSearchParams.toString()}`;
     router.replace(url);
     onCloseMobile();
   }

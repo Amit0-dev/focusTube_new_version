@@ -18,6 +18,12 @@ enum Role {
   CREATOR
 }
 
+enum PlaylistStatus {
+  NEW
+  IN_PROGRESS
+  COMPLETED
+}
+
 model User {
   id          String @id @default(uuid())
   clerkUserId String @unique
@@ -45,6 +51,10 @@ model Playlist {
   kind              String
   itemCount         Int
 
+  completedVideosCount Int            @default(0)
+  status               PlaylistStatus @default(NEW)
+  completedAt          DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -67,6 +77,9 @@ model Video {
   position       Int
   channelId      String
 
+  isComplete  Boolean   @default(false)
+  completedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -83,7 +96,7 @@ model VideoProgress {
   playlistId String
 
   lastPlayTime  Float
-  lastPlayedAt DateTime
+  lastPlayedAt  DateTime
   totalDuration Float
 
   isComplete  Boolean   @default(false)

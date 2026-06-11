@@ -45,11 +45,13 @@ export async function updateVideoProgress({
   isComplete,
   id,
   userId,
+  completedAt,
 }: {
   currentTime: number;
   isComplete: boolean;
   id: string;
   userId: string;
+  completedAt: Date | null;
 }) {
   return await prisma.videoProgress.update({
     where: {
@@ -59,6 +61,7 @@ export async function updateVideoProgress({
     data: {
       lastPlayTime: currentTime,
       isComplete,
+      completedAt,
     },
   });
 }

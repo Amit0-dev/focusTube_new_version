@@ -59,6 +59,8 @@ export default async function Playlist() {
               itemCount={p.itemCount}
               thumbnail={p.thumbnail}
               title={p.title}
+              status={p.status}
+              completedVideos={p.completedVideosCount}
             />
           ))}
         </div>

@@ -93,4 +93,6 @@ export interface Playlist {
   channelTitle: string;
   kind: string;
   itemCount: number;
+  status: 'IN_PROGRESS' | 'NEW' | 'COMPLETED';
+  completedVideosCount: number;
 }

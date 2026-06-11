@@ -5,9 +5,9 @@ import SectionHeader from '@/components/learner-dashboard/SectionHeader';
 import { apiFetch } from '@/lib/api/apiFetch';
 import { Clock3, NotebookPen, PlayCircle, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { YouTubePlayer } from 'react-youtube';
 
 import Player from './Player';
-import type { YouTubePlayer } from 'react-youtube';
 
 type PlaylistSummary = {
   id: string;
@@ -25,6 +25,8 @@ type PlaylistVideo = {
   channelTitle: string;
   position: number;
   description: string | null;
+  isComplete: boolean;
+  completedAt: Date | null;
 };
 
 type NoteEntry = {
@@ -77,8 +79,7 @@ export default function PlaylistWorkspace({
 
   const playerRef = useRef<YouTubePlayer>(null);
 
-  const handlePlayerRef = (player: YouTubePlayer
-  ) => {
+  const handlePlayerRef = (player: YouTubePlayer) => {
     playerRef.current = player;
   };
 
@@ -233,6 +234,7 @@ export default function PlaylistWorkspace({
                 {videos.map((video, index) => {
                   const isActive =
                     activeVideo?.youtubeVideoId === video.youtubeVideoId;
+                  const isCompleted = video.isComplete;
 
                   return (
                     <button
@@ -240,13 +242,23 @@ export default function PlaylistWorkspace({
                       type="button"
                       onClick={() => setActiveVideoId(video.youtubeVideoId)}
                       className={`group flex w-full items-center gap-2.5 rounded-2xl border px-2.5 py-2.5 text-left transition sm:gap-3 sm:px-3 sm:py-3 ${
-                        isActive
-                          ? 'border-orange-300/40 bg-linear-to-r from-orange-500/15 to-amber-300/10 shadow-lg shadow-orange-500/10'
-                          : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
+                        isCompleted
+                          ? isActive
+                            ? 'border-emerald-300/45 bg-linear-to-r from-emerald-500/18 via-emerald-400/12 to-teal-300/10 shadow-lg shadow-emerald-500/10'
+                            : 'border-emerald-400/25 bg-linear-to-r from-emerald-500/12 via-emerald-400/8 to-teal-300/6 hover:border-emerald-300/40 hover:bg-emerald-400/12'
+                          : isActive
+                            ? 'border-orange-300/40 bg-linear-to-r from-orange-500/15 to-amber-300/10 shadow-lg shadow-orange-500/10'
+                            : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
                       }`}
                     >
-                      <div className="w-7 text-center text-xs font-semibold text-white/50">
-                        {index + 1}
+                      <div
+                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                          isCompleted
+                            ? 'bg-emerald-400/15 text-emerald-100 ring-1 ring-emerald-300/25'
+                            : 'text-white/50'
+                        }`}
+                      >
+                        {video.position + 1}
                       </div>
 
                       <div className="h-12 w-20 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/30 sm:h-14 sm:w-24">
@@ -263,16 +275,24 @@ export default function PlaylistWorkspace({
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-white">
+                        <p
+                          className={`truncate text-sm font-semibold ${isCompleted ? 'text-emerald-50' : 'text-white'}`}
+                        >
                           {video.title}
                         </p>
-                        <p className="mt-1 truncate text-xs text-white/60">
+                        <p
+                          className={`mt-1 truncate text-xs ${isCompleted ? 'text-emerald-100/65' : 'text-white/60'}`}
+                        >
                           {video.channelTitle}
                         </p>
                       </div>
 
-                      <div className="hidden rounded-xl border border-white/10 bg-black/20 px-2 py-1 text-[11px] text-white/60 sm:block">
-                        {video.position + 1}
+                      <div className="hidden items-center gap-2 sm:flex">
+                        {isCompleted ? (
+                          <div className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-100">
+                            Completed
+                          </div>
+                        ) : null}
                       </div>
                     </button>
                   );
@@ -355,19 +375,20 @@ export default function PlaylistWorkspace({
                       <div className="absolute top-0 left-0 h-full w-1.5 bg-linear-to-b from-cyan-400/70 to-blue-500/70" />
 
                       <div className="mb-2 flex items-center justify-between gap-2 pl-2">
-                        <div className='flex items-center justify-center gap-2'>
+                        <div className="flex items-center justify-center gap-2">
                           <span className="rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] font-semibold text-white/60">
-                          Note
-                        </span>
-                        <span
-                        onClick={() => {
-                          if (playerRef.current) {
-                            playerRef.current.seekTo(note.timestamp, true);
-                          }
-                        }}
-                        className="rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] font-semibold text-white/60 cursor-pointer">
-                          Jump
-                        </span>
+                            Note
+                          </span>
+                          <span
+                            onClick={() => {
+                              if (playerRef.current) {
+                                playerRef.current.seekTo(note.timestamp, true);
+                              }
+                            }}
+                            className="rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] font-semibold text-white/60 cursor-pointer"
+                          >
+                            Jump
+                          </span>
                         </div>
 
                         <div className="inline-flex items-center gap-1 text-[10px] text-white/50">

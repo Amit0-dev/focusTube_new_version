@@ -1,3 +1,4 @@
+import { PlaylistStatus } from '@/generated/prisma/enums';
 import prisma from '@/lib/prisma';
 
 export async function findPlaylistByYoutubePlaylistId(
@@ -75,6 +76,62 @@ export async function getPlaylistById(playlistId: string, userId: string) {
       User: {
         id: userId,
       },
+    },
+  });
+}
+
+export async function updatePlaylistStatusById(
+  playlistId: string,
+  userId: string,
+  status: PlaylistStatus,
+  completedAt: Date,
+) {
+  return await prisma.playlist.update({
+    where: {
+      id: playlistId,
+      User: {
+        id: userId,
+      },
+    },
+    data: {
+      status,
+      completedAt,
+    },
+  });
+}
+
+export async function updatePlaylistCompletedVideosCountById(
+  playlistId: string,
+  userId: string,
+) {
+  return await prisma.playlist.update({
+    where: {
+      id: playlistId,
+      User: {
+        id: userId,
+      },
+    },
+    data: {
+      completedVideosCount: {
+        increment: 1,
+      },
+    },
+  });
+}
+
+export async function markPlaylistAsInProgress(
+  playlistId: string,
+  userId: string,
+) {
+  return await prisma.playlist.update({
+    where: {
+      id: playlistId,
+      User: {
+        id: userId,
+      },
+    },
+    data: {
+      status: PlaylistStatus.IN_PROGRESS,
     },
   });
 }
