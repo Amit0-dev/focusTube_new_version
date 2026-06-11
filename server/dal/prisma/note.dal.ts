@@ -5,10 +5,12 @@ export async function createNote(
   videoId: string,
   content: string,
   userId: string,
+  timestamp: number,
 ) {
   const note = await prisma.note.create({
     data: {
       content,
+      timestamp,
       playlistId,
       videoId,
       userId,

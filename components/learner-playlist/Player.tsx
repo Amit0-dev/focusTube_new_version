@@ -5,6 +5,7 @@ import { ERROR_CODES } from '@/utils/player';
 import { throttle } from '@/utils/useThrottling';
 import { useEffect, useRef, useState } from 'react';
 import YouTube, { YouTubeEvent } from 'react-youtube';
+import type { YouTubePlayer } from 'react-youtube';
 import { z } from 'zod';
 
 export default function Player({
@@ -12,11 +13,15 @@ export default function Player({
   videoTitle,
   playlistId,
   videoIdYt,
+  handleTimeUpdate,
+  handlePlayerRef,
 }: {
   videoId: string;
   videoTitle: string;
   playlistId: string;
   videoIdYt: string;
+  handleTimeUpdate?: (time: number) => void;
+  handlePlayerRef?: (player: YouTubePlayer) => void;
 }) {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastTimeRef = useRef<number>(0);
@@ -112,12 +117,15 @@ export default function Player({
     }
   }
 
-  const onPlayerReady = async (e: YouTubeEvent) => {};
+  const onPlayerReady = async (e: YouTubeEvent) => {
+    handlePlayerRef?.(e.target);
+  };
 
   const onEnd = async (e: YouTubeEvent) => {
     try {
       const currentTime = e.target.getCurrentTime();
       const duration = e.target.getDuration();
+      handleTimeUpdate?.(currentTime);
 
       console.log('currrent time : ', currentTime, ' duration: ', duration);
       console.log('completed: ', currentTime / duration >= 0.9);
@@ -138,6 +146,7 @@ export default function Player({
     try {
       const currentTime = e.target.getCurrentTime();
       const totalDuration = e.target.getDuration();
+      handleTimeUpdate?.(currentTime);
 
       await throttledUpdateRef.current?.(
         currentTime,
@@ -160,6 +169,7 @@ export default function Player({
           intervalRef.current = setInterval(() => {
             const currentTime = e.target.getCurrentTime();
             lastTimeRef.current = currentTime;
+            handleTimeUpdate?.(currentTime);
 
             // send currentTime to backend
             throttledUpdateRef.current?.(
@@ -202,6 +212,7 @@ export default function Player({
 
       const currentTime = e.target.getCurrentTime();
       const totalDuration = e.target.getDuration();
+      handleTimeUpdate?.(currentTime);
 
       // send req to backend and create progress
       await throttledCreateRef.current?.(

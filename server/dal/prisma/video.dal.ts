@@ -6,6 +6,9 @@ export async function getAllVideosByPlaylistId(playlistId: string) {
     where: {
       playlistId,
     },
+    orderBy: {
+      position: 'asc',
+    }
   });
 }
 

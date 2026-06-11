@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 const noteSchema = z.object({
   content: z.string().min(1, 'Content is required'),
+  timestamp: z.number().nonnegative('Timestamp must be a non-negative number'),
   playlistId: z.string(),
   videoId: z.string(),
 });
@@ -17,9 +18,9 @@ const getNotesSchema = z.object({
 
 export async function POST(req: NextRequest, res: NextResponse) {
   try {
-    const { content, playlistId, videoId } = await req.json();
+    const { content, timestamp, playlistId, videoId } = await req.json();
 
-    const result = noteSchema.safeParse({ content, playlistId, videoId });
+    const result = noteSchema.safeParse({ content, timestamp, playlistId, videoId });
 
     if (!result.success) {
       if (result.error instanceof z.ZodError) {
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
       playlistId,
       videoId,
       content,
+      timestamp,
     });
 
     return NextResponse.json(

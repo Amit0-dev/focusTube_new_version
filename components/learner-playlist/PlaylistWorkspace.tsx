@@ -2,10 +2,12 @@
 
 import DashboardCard from '@/components/learner-dashboard/DashboardCard';
 import SectionHeader from '@/components/learner-dashboard/SectionHeader';
+import { apiFetch } from '@/lib/api/apiFetch';
 import { Clock3, NotebookPen, PlayCircle, Trash2, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import Player from './Player';
+import type { YouTubePlayer } from 'react-youtube';
 
 type PlaylistSummary = {
   id: string;
@@ -26,13 +28,25 @@ type PlaylistVideo = {
 };
 
 type NoteEntry = {
+  videoId: string;
+  playlistId: string;
   id: string;
-  text: string;
-  createdAt: string;
+  content: string;
+  timestamp: number;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 function formatClock(date: Date) {
-  return date.toLocaleTimeString([], {
+  if (!date) {
+    return;
+  }
+
+  if (!(date instanceof Date)) {
+    date = new Date(date);
+  }
+  return date.toLocaleDateString([], {
     hour: '2-digit',
     minute: '2-digit',
   });
@@ -45,14 +59,28 @@ export default function PlaylistWorkspace({
   playlist: PlaylistSummary;
   videos: PlaylistVideo[];
 }) {
-  const [activeVideoId, setActiveVideoId] = useState(
+  const [activeVideoId, setActiveVideoId] = useState<string>(
     videos[0]?.youtubeVideoId ?? '',
   );
   const [noteDraft, setNoteDraft] = useState('');
   const [allNotesOpen, setAllNotesOpen] = useState(false);
-  const [notesByVideo, setNotesByVideo] = useState<Record<string, NoteEntry[]>>(
-    {},
-  );
+  const [notesByVideo, setNotesByVideo] = useState<NoteEntry[]>([]);
+  const [loadingNotes, setLoadingNotes] = useState<boolean>(false);
+  const [creatingNote, setCreatingNote] = useState<boolean>(false);
+
+  // Perhaps add zustand to add global state management
+  const currentTimeRef = useRef<number>(0);
+
+  const handleTimeUpdate = (time: number) => {
+    currentTimeRef.current = time;
+  };
+
+  const playerRef = useRef<YouTubePlayer>(null);
+
+  const handlePlayerRef = (player: YouTubePlayer
+  ) => {
+    playerRef.current = player;
+  };
 
   const activeVideo = useMemo(
     () =>
@@ -61,45 +89,71 @@ export default function PlaylistWorkspace({
     [activeVideoId, videos],
   );
 
-  const activeNotes = activeVideo ? (notesByVideo[activeVideo.id] ?? []) : [];
-  const notesPreview = activeNotes.slice(0, 3);
+  const notesPreview = notesByVideo.slice(0, 3);
 
-  const focusScore = Math.min(100, 28 + activeNotes.length * 18);
+  const focusScore = Math.min(100, 28 + notesByVideo.length * 18);
 
-  function saveNote() {
-    const trimmed = noteDraft.trim();
+  async function createNote() {
+    try {
+      setCreatingNote(true);
+      if (!noteDraft.trim() || !activeVideo) return;
 
-    if (!trimmed || !activeVideo) {
-      return;
+      const payload = {
+        videoId: activeVideo.id,
+        playlistId: playlist.id,
+        content: noteDraft.trim(),
+        timestamp: currentTimeRef.current,
+      };
+
+      const response = await apiFetch('/api/note', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+
+      if (!response) {
+        throw new Error('Failed to save note');
+      }
+
+      setNoteDraft('');
+
+      // call get notes api and update the note list
+      getNotesByVideoId(activeVideo.id);
+    } catch (error) {
+      console.error('Failed to save note:', error);
+    } finally {
+      setCreatingNote(false);
     }
+  }
 
-    setNotesByVideo((prev) => ({
-      ...prev,
-      [activeVideo.id]: [
+  async function getNotesByVideoId(videoId: string) {
+    try {
+      setLoadingNotes(true);
+      const response: any = await apiFetch(
+        `/api/note?videoId=${videoId}&playlistId=${playlist.id}`,
         {
-          id: `${activeVideo.id}-${Date.now()}`,
-          text: trimmed,
-          createdAt: formatClock(new Date()),
+          method: 'GET',
         },
-        ...(prev[activeVideo.id] ?? []),
-      ],
-    }));
+      );
 
-    setNoteDraft('');
-  }
+      if (!response) {
+        throw new Error('Failed to fetch notes');
+      }
 
-  function removeNote(noteId: string) {
-    if (!activeVideo) {
-      return;
+      console.log('fetched notes response: ', response);
+      setNotesByVideo(response.notes);
+      console.log('fetched notes: ', response.notes);
+    } catch (error) {
+      console.error('Failed to fetch notes:', error);
+    } finally {
+      setLoadingNotes(false);
     }
-
-    setNotesByVideo((prev) => ({
-      ...prev,
-      [activeVideo.id]: (prev[activeVideo.id] ?? []).filter(
-        (note) => note.id !== noteId,
-      ),
-    }));
   }
+
+  useEffect(() => {
+    if (activeVideo) {
+      getNotesByVideoId(activeVideo.id);
+    }
+  }, [activeVideo]);
 
   return (
     <div className="relative space-y-6 overflow-hidden">
@@ -135,6 +189,8 @@ export default function PlaylistWorkspace({
                 videoIdYt={activeVideo.youtubeVideoId}
                 videoTitle={activeVideo?.title}
                 playlistId={playlist.id}
+                handleTimeUpdate={handleTimeUpdate}
+                handlePlayerRef={handlePlayerRef}
               />
             </div>
 
@@ -175,13 +231,14 @@ export default function PlaylistWorkspace({
             ) : (
               <div className="space-y-3">
                 {videos.map((video, index) => {
-                  const isActive = activeVideo?.id === video.id;
+                  const isActive =
+                    activeVideo?.youtubeVideoId === video.youtubeVideoId;
 
                   return (
                     <button
-                      key={video.id}
+                      key={video.youtubeVideoId}
                       type="button"
-                      onClick={() => setActiveVideoId(video.id)}
+                      onClick={() => setActiveVideoId(video.youtubeVideoId)}
                       className={`group flex w-full items-center gap-2.5 rounded-2xl border px-2.5 py-2.5 text-left transition sm:gap-3 sm:px-3 sm:py-3 ${
                         isActive
                           ? 'border-orange-300/40 bg-linear-to-r from-orange-500/15 to-amber-300/10 shadow-lg shadow-orange-500/10'
@@ -237,7 +294,7 @@ export default function PlaylistWorkspace({
                 onClick={() => setAllNotesOpen(true)}
                 className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-white/75 transition hover:bg-white/10"
               >
-                All Notes ({activeNotes.length})
+                All Notes ({notesByVideo.length})
               </button>
             </div>
 
@@ -248,10 +305,10 @@ export default function PlaylistWorkspace({
             <textarea
               value={noteDraft}
               onChange={(event) => setNoteDraft(event.target.value)}
-              onKeyDown={(event) => {
+              onKeyDown={async (event) => {
                 if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
                   event.preventDefault();
-                  saveNote();
+                  await createNote();
                 }
               }}
               placeholder="Write your note here..."
@@ -261,10 +318,11 @@ export default function PlaylistWorkspace({
             <div className="mt-3 flex flex-col gap-2 sm:flex-row">
               <button
                 type="button"
-                onClick={saveNote}
-                className="inline-flex flex-1 items-center justify-center rounded-2xl bg-linear-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-95"
+                onClick={createNote}
+                disabled={creatingNote}
+                className="inline-flex flex-1 items-center justify-center rounded-2xl bg-linear-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-95 cursor-pointer"
               >
-                Save Note
+                {creatingNote ? 'Saving...' : 'Save Note'}
               </button>
               <button
                 type="button"
@@ -297,24 +355,37 @@ export default function PlaylistWorkspace({
                       <div className="absolute top-0 left-0 h-full w-1.5 bg-linear-to-b from-cyan-400/70 to-blue-500/70" />
 
                       <div className="mb-2 flex items-center justify-between gap-2 pl-2">
-                        <span className="rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] font-semibold text-white/60">
+                        <div className='flex items-center justify-center gap-2'>
+                          <span className="rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] font-semibold text-white/60">
                           Note
                         </span>
+                        <span
+                        onClick={() => {
+                          if (playerRef.current) {
+                            playerRef.current.seekTo(note.timestamp, true);
+                          }
+                        }}
+                        className="rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] font-semibold text-white/60 cursor-pointer">
+                          Jump
+                        </span>
+                        </div>
 
                         <div className="inline-flex items-center gap-1 text-[10px] text-white/50">
                           <Clock3 size={11} />
-                          {note.createdAt}
+                          {formatClock(note.createdAt)}
                         </div>
                       </div>
 
                       <div className="pl-2 text-xs leading-relaxed text-white/85">
-                        {note.text}
+                        {note.content}
                       </div>
 
                       <div className="mt-2 flex items-center justify-end pl-2">
                         <button
                           type="button"
-                          onClick={() => removeNote(note.id)}
+                          onClick={() => {
+                            alert('Delete note functionality coming soon!');
+                          }}
                           className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-black/20 px-2 py-1 text-[10px] text-white/70 opacity-80 transition hover:bg-white/10 hover:opacity-100"
                         >
                           <Trash2 size={11} />
@@ -327,13 +398,13 @@ export default function PlaylistWorkspace({
               </div>
             </div>
 
-            {activeNotes.length > 3 ? (
+            {notesByVideo.length > 3 ? (
               <button
                 type="button"
                 onClick={() => setAllNotesOpen(true)}
                 className="mt-3 inline-flex w-full items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80 transition hover:bg-white/10"
               >
-                View all {activeNotes.length} notes
+                View all {notesByVideo.length} notes
               </button>
             ) : null}
           </DashboardCard>
@@ -366,12 +437,12 @@ export default function PlaylistWorkspace({
             </p>
 
             <div className="scrollbar-hide mt-4 h-[calc(100dvh-7.5rem)] space-y-3 overflow-y-auto pr-1">
-              {activeNotes.length === 0 ? (
+              {notesByVideo.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-white/15 bg-white/5 px-3 py-4 text-xs text-white/60">
                   No notes yet for this video.
                 </div>
               ) : (
-                activeNotes.map((note) => (
+                notesByVideo.map((note) => (
                   <div
                     key={note.id}
                     className="relative overflow-hidden rounded-2xl border border-white/10 bg-linear-to-br from-white/8 to-white/3 px-3 py-3"
@@ -384,18 +455,18 @@ export default function PlaylistWorkspace({
                       </span>
                       <div className="inline-flex items-center gap-1 text-[10px] text-white/50">
                         <Clock3 size={11} />
-                        {note.createdAt}
+                        {formatClock(note.createdAt)}
                       </div>
                     </div>
 
                     <div className="pl-2 text-xs leading-relaxed text-white/85">
-                      {note.text}
+                      {note.content}
                     </div>
 
                     <div className="mt-2 flex items-center justify-end pl-2">
                       <button
                         type="button"
-                        onClick={() => removeNote(note.id)}
+                        onClick={() => {}}
                         className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-black/20 px-2 py-1 text-[10px] text-white/70 opacity-80 transition hover:bg-white/10 hover:opacity-100"
                       >
                         <Trash2 size={11} />

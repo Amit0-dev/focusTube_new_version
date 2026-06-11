@@ -9,6 +9,7 @@ import { findUserByClerkUserId } from '../dal/prisma/user.dal';
 export async function createNoteService(args: {
   clerkUserId: string;
   content: string;
+  timestamp: number;
   playlistId: string;
   videoId: string;
 }) {
@@ -24,6 +25,7 @@ export async function createNoteService(args: {
       args.videoId,
       args.content,
       user.id,
+      args.timestamp
     );
 
     if (!response || !response.id) {
