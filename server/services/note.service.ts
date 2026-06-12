@@ -37,6 +37,7 @@ export async function createNoteService(args: {
   }
 }
 
+// TODO: also pass userId and check if the note belongs to the user before allowing update or delete
 export async function updateNoteService(noteId: string, content: string) {
   try {
     const existingNote = await findNoteById(noteId);

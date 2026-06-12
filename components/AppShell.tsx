@@ -11,7 +11,8 @@ export default function AppShell({
 }) {
   const pathname = usePathname();
 
-  const hideGlobalHeader = pathname?.startsWith('/learner');
+  const hideGlobalHeader =
+    pathname?.startsWith('/learner') || pathname?.startsWith('/creator');
 
   return (
     <>

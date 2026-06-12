@@ -5,6 +5,7 @@ import { useUser } from '@clerk/nextjs';
 import { Button } from '@heroui/react';
 import { usePathname, useRouter } from 'next/navigation';
 
+// BUG: fix the bug in this component when i am going for signup then it throws error says user role is not defined in public metadata.
 const DashboardRedirectButton = () => {
   const { isLoaded, isSignedIn, user } = useUser();
   const router = useRouter();
