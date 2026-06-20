@@ -53,17 +53,6 @@ export default function CreatorPlaylistCard({
             <Users2 size={12} className="text-cyan-300" />
             {234} learners
           </div>
-
-          <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3">
-            <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] shadow-lg backdrop-blur-md border-cyan-400/20 bg-cyan-400/12 text-cyan-50">
-              <Sparkles size={12} className="text-cyan-200" />
-              Shared space
-            </div>
-
-            <div className="rounded-full border border-white/10 bg-black/35 px-3 py-1.5 text-[11px] font-semibold text-white/85 backdrop-blur-md">
-              {playlist.status.replace('_', ' ')}
-            </div>
-          </div>
         </div>
 
         <div className="relative mt-4 space-y-4">
@@ -93,21 +82,6 @@ export default function CreatorPlaylistCard({
                 </div>
               </div>
             ))}
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <span className="text-xs text-white/55">
-              Manage this space like a published product.
-            </span>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <button
-                type="button"
-                suppressHydrationWarning
-                className="inline-flex w-full items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/90 transition hover:bg-white/10 sm:w-auto"
-              >
-                Share
-              </button>
-            </div>
           </div>
         </div>
       </DashboardCard>

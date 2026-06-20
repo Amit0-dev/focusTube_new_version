@@ -16,6 +16,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 const navItems = [
   { label: 'Playlists', tab: 'playlists', Icon: ListVideo },
   { label: 'Notes', tab: 'notes', Icon: StickyNote },
+  { label: 'Creator Playlists', tab: 'creator-playlists', Icon: ListVideo },
   { label: 'Dashboard', tab: 'dashboard', Icon: LayoutDashboard },
 ] as const;
 

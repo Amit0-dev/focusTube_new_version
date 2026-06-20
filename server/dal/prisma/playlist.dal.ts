@@ -80,6 +80,14 @@ export async function getPlaylistById(playlistId: string, userId: string) {
   });
 }
 
+export async function getPlaylistByIdForJoin(playlistId: string) {
+  return await prisma.playlist.findUnique({
+    where: {
+      id: playlistId,
+    },
+  });
+}
+
 export async function updatePlaylistStatusById(
   playlistId: string,
   userId: string,
@@ -134,4 +142,73 @@ export async function markPlaylistAsInProgress(
       status: PlaylistStatus.IN_PROGRESS,
     },
   });
+}
+
+export async function joinCreatorPlaylist(playlistId: string, userId: string) {
+  return await prisma.creatorSpace.create({
+    data: {
+      userId,
+      playlistId
+    }
+  })
+}
+
+export async function isUserAlreadyJoinedPlaylist(playlistId: string, userId: string) {
+  return await prisma.creatorSpace.findFirst({
+    where: {
+      playlistId,
+      userId,
+    }
+  })
+}
+
+export async function getAllCreatorPlaylists() {
+  return await prisma.playlist.findMany({
+    where: {
+      User: {
+        role: "CREATOR"
+      }
+    }
+  })
+}
+
+export async function getJoinedUserCountOfCreatorPlaylist(playlistId: string) {
+  return await prisma.creatorSpace.count({
+    where: {
+      Playlist: {
+        id: playlistId
+      }
+    }
+  })
+}
+
+export async function getJoinedUsersOfCreatorPlaylist(playlistId: string) {
+  return await prisma.creatorSpace.findMany({
+    where: {
+      Playlist: {
+        id: playlistId
+      }
+    },
+    include: {
+      User: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true
+        }
+      }
+    }
+  })
+}
+
+export async function getUserEnrolledCreatorPlaylist(userId: string) {
+  return await prisma.creatorSpace.findMany({
+    where: {
+      userId
+    },
+    include: {
+      Playlist: true
+    }
+  })
 }

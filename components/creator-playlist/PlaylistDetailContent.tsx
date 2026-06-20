@@ -11,21 +11,39 @@ import { cn } from '@/lib/cn';
 import { UsersTab } from './UsersTab';
 import { VideosTab } from './VideoTab';
 import { AssignmentsTab } from './AssignmentsTab';
+import type { Playlist } from '@/types/playlist';
+import DashboardCard from '../learner-dashboard/DashboardCard';
+import { getPlaylistByIdService } from '@/server/services/playlist.service';
+import Image from 'next/image';
+import { getJoinedUserCountOfCreatorPlaylist } from '@/server/dal/prisma/playlist.dal';
 
-const PLAYLIST = {
-  title: 'The DEAD Series!',
-  subtitle: 'Published playlist space',
-  description:
-    'Playlist focusing on the grow, watch audience growth, and manage imports in one place.',
-  createdBy: 'FocusTube',
-  createdOn: 'May 5, 2026',
-  lastUpdated: 'May 20, 2026',
-  totalVideos: 10,
-  totalLearners: 254,
-  totalDuration: '5h 36m',
-};
+export default async function PlaylistDetailContent({ tab, playlistId }: { tab: string, playlistId: string }) {
 
-export default function PlaylistDetailContent({ tab }: { tab: string }) {
+  let playlist: Playlist | null = null;
+  let userCount: number = 0;
+  let errorMessage: string | null = null;
+
+  try {
+    playlist = await getPlaylistByIdService(playlistId)
+    userCount = await getJoinedUserCountOfCreatorPlaylist(playlistId)
+  } catch (error) {
+    console.error('Failed to fetch playlists:', error);
+    errorMessage =
+      error instanceof Error ? error.message : 'Failed to fetch playlists';
+  }
+
+  if (errorMessage || !playlist) {
+    return (
+      <DashboardCard className="border border-red-500/20 bg-red-500/10 p-6">
+        <div className="text-sm font-semibold text-red-100">
+          Could not load playlist
+        </div>
+        <div className="mt-1 text-sm text-red-100/70">{errorMessage}</div>
+        {/* add a retry button here in case of error in future  */}
+      </DashboardCard>
+    );
+  }
+
   return (
     <div className="flex min-h-full gap-6">
       {/* Main content area */}
@@ -36,7 +54,7 @@ export default function PlaylistDetailContent({ tab }: { tab: string }) {
             Playlist spaces
           </span>
           <ChevronRight size={14} className="text-white/30" />
-          <span className="font-medium text-white">The DEAD Series!</span>
+          <span className="font-medium text-white">{playlist.title}!</span>
         </div>
 
         {/* Playlist header card */}
@@ -44,47 +62,45 @@ export default function PlaylistDetailContent({ tab }: { tab: string }) {
           <div className="flex flex-col gap-5 sm:flex-row">
             {/* Thumbnail */}
             <div className="relative h-36 w-60 flex-shrink-0 overflow-hidden rounded-xl bg-linear-to-br from-red-700/70 via-orange-600/50 to-slate-900 ring-1 ring-white/10">
-              <div className="absolute inset-0 bg-[linear-gradient(135deg,transparent_30%,rgba(0,0,0,0.5)_100%)]" />
+              <div className="absolute inset-0 bg-[linear-gradient(135deg,transparent_30%,rgba(0,0,0,0.5)_100%)]" >
+                <Image
+                  src={playlist.thumbnail}
+                  alt="Playlist thumbnail"
+                  fill
+                  className="object-cover"
+                />
+              </div>
               <div className="absolute left-2.5 top-2.5 inline-flex items-center gap-1.5 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-semibold text-white/90 backdrop-blur-sm">
                 <Video size={10} className="text-cyan-300" />
-                10 videos
+                {playlist.itemCount} videos
               </div>
               <div className="absolute right-2.5 top-2.5 inline-flex items-center gap-1.5 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-semibold text-white/90 backdrop-blur-sm">
                 <Users size={10} className="text-cyan-300" />
-                254 learners
+                <span>{userCount} learners</span>
               </div>
-              <div className="absolute bottom-2.5 left-2.5 inline-flex items-center gap-1.5 rounded-full border border-cyan-400/20 bg-cyan-400/12 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-cyan-50 backdrop-blur-sm">
-                <Sparkles size={10} className="text-cyan-200" />
-                Shared Space
-              </div>
+
             </div>
 
             {/* Info */}
             <div className="flex flex-1 flex-col justify-between">
               <div>
-                <h1 className="text-xl font-bold text-white">{PLAYLIST.title}</h1>
-                <p className="mt-0.5 text-sm text-white/50">{PLAYLIST.subtitle}</p>
+                <h1 className="text-xl font-bold text-white">{playlist.title}</h1>
+
                 <p className="mt-3 text-sm leading-relaxed text-white/60">
-                  {PLAYLIST.description}
+                  {playlist.description}
                 </p>
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/40">
                 <span>
                   Created by{' '}
                   <span className="font-medium text-white/60">
-                    F{' '}
-                    <span className="text-white/70">{PLAYLIST.createdBy}</span>
+                    <span className="text-white/70">{playlist.channelTitle}</span>
                   </span>
                 </span>
                 <span className="text-white/20">|</span>
                 <span>
                   Created on{' '}
-                  <span className="text-white/60">{PLAYLIST.createdOn}</span>
-                </span>
-                <span className="text-white/20">|</span>
-                <span>
-                  Last updated{' '}
-                  <span className="text-white/60">{PLAYLIST.lastUpdated}</span>
+                  <span className="text-white/60">{new Date(playlist.publishedAt).toLocaleDateString()}</span>
                 </span>
               </div>
             </div>
@@ -92,8 +108,8 @@ export default function PlaylistDetailContent({ tab }: { tab: string }) {
         </div>
 
         {/* Tab content */}
-        {tab === 'videos' && <VideosTab />}
-        {tab === 'users' && <UsersTab />}
+        {tab === 'videos' && <VideosTab playlistId={playlist.id} />}
+        {tab === 'users' && <UsersTab playlistId={playlist.id} />}
         {tab === 'assignments' && <AssignmentsTab />}
       </div>
 
@@ -108,21 +124,21 @@ export default function PlaylistDetailContent({ tab }: { tab: string }) {
               {
                 icon: Video,
                 label: 'Total videos',
-                value: PLAYLIST.totalVideos,
+                value: playlist.itemCount,
                 iconColor: 'text-cyan-400',
                 bg: 'bg-cyan-400/10',
               },
               {
                 icon: Users,
                 label: 'Total learners',
-                value: PLAYLIST.totalLearners,
+                value: userCount,
                 iconColor: 'text-pink-400',
                 bg: 'bg-pink-400/10',
               },
               {
                 icon: Clock,
                 label: 'Total duration',
-                value: PLAYLIST.totalDuration,
+                value: "00:00",
                 iconColor: 'text-amber-400',
                 bg: 'bg-amber-400/10',
               },
@@ -143,29 +159,6 @@ export default function PlaylistDetailContent({ tab }: { tab: string }) {
               </div>
             ))}
           </div>
-
-          <button
-            type="button"
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm font-medium text-white/80 transition hover:bg-white/10"
-          >
-            <BarChart3 size={15} className="text-cyan-400" />
-            View analytics
-          </button>
-        </div>
-
-        {/* Invite Users */}
-        <div className="rounded-2xl border border-white/10 bg-linear-to-br from-white/[0.06] to-white/[0.02] p-5">
-          <h3 className="text-sm font-semibold text-white">Invite Users</h3>
-          <p className="mt-2 text-xs leading-relaxed text-white/40">
-            Add creators, editors, or learners to collaborate on this playlist.
-          </p>
-          <button
-            type="button"
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-400/10 py-2.5 text-sm font-semibold text-cyan-300 transition hover:bg-cyan-400/20"
-          >
-            <UserPlus size={15} />
-            Invite users
-          </button>
         </div>
       </div>
     </div>

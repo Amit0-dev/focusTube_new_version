@@ -9,3 +9,11 @@ export async function findUserByClerkUserId(clerkUserId: string) {
 
   return user;
 }
+
+export async function getUserById(userId: string) {
+  return await prisma.user.findUnique({
+    where: {
+      id: userId
+    }
+  })
+}

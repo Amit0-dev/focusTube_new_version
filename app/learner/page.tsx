@@ -1,3 +1,4 @@
+import CreatorPlaylists from '@/components/learner-dashboard/CreatorPlaylists';
 import Dashboard from '@/components/learner-dashboard/Dashboard';
 import Note from '@/components/learner-dashboard/Note';
 import Playlist from '@/components/learner-dashboard/Playlist';
@@ -12,6 +13,7 @@ export default async function LearnerDashboardPage({
 
   if (tab === 'dashboard') return <Dashboard />;
   if (tab === 'playlists') return <Playlist />;
+  if (tab === 'creator-playlists') return <CreatorPlaylists />;
 
   if (tab === 'notes')
     return (

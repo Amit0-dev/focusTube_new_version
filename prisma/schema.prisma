@@ -36,6 +36,7 @@ model User {
 
   playlists     Playlist[]
   VideoProgress VideoProgress[]
+  CreatorSpace  CreatorSpace[]
 }
 
 model Playlist {
@@ -60,6 +61,7 @@ model Playlist {
 
   video         Video[]
   VideoProgress VideoProgress[]
+  CreatorSpace  CreatorSpace[]
 
   User User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -122,4 +124,17 @@ model Note {
   updatedAt DateTime @updatedAt
 
   Video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+}
+
+model CreatorSpace {
+  id         String  @id @default(uuid())
+  userId     String
+  playlistId String
+  ownedBy    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  User     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
 }

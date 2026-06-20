@@ -70,10 +70,11 @@ export interface PlaylistItemResponseType {
 }
 
 export interface PlaylistVideoType {
+  id: string;
   kind: string;
   youtubeVideoId: string;
   title: string;
-  description: string;
+  description: string | null;
   channelId: string;
   publishedAt: Date;
   thumbnail: string;

@@ -1,4 +1,4 @@
-import { getPlaylistOfCurrentUserService } from '@/server/services/playlist.service';
+import { getPlaylistOfCurrentUserService, getUserEnrolledCreatorPlaylistService } from '@/server/services/playlist.service';
 import type { Playlist } from '@/types/playlist';
 
 import DashboardCard from './DashboardCard';
@@ -6,16 +6,32 @@ import ImportPlaylistCard from './ImportPlaylistCard';
 import PlaylistCard from './PlaylistCard';
 import SectionHeader from './SectionHeader';
 
+interface EnrolledCreatorPlaylist {
+  Playlist: Playlist
+}
+
 export default async function Playlist() {
   let playlists: Playlist[] = [];
   let errorMessage: string | null = null;
 
+  let creatorPlaylists: EnrolledCreatorPlaylist[] = [];
+  let creatorErrorMessage: string | null = null;
+
   try {
     playlists = await getPlaylistOfCurrentUserService();
+
   } catch (error) {
     console.error('Failed to fetch playlists:', error);
     errorMessage =
       error instanceof Error ? error.message : 'Failed to fetch playlists';
+  }
+
+  try {
+    creatorPlaylists = await getUserEnrolledCreatorPlaylistService()
+  } catch (error) {
+    console.error('Failed to fetch creator playlists:', error);
+    creatorErrorMessage =
+      error instanceof Error ? error.message : 'Failed to fetch creator playlists';
   }
 
   if (errorMessage) {
@@ -31,40 +47,77 @@ export default async function Playlist() {
   }
 
   return (
-    <div className="space-y-7">
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <SectionHeader
-          title="Playlists"
-          subtitle="Browse your learning queue and pick your next session."
-        />
-        <ImportPlaylistCard />
+    <div className='w-full'>
+      <div className="space-y-7">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <SectionHeader
+            title="Playlists"
+            subtitle="Browse your learning queue and pick your next session."
+          />
+          <ImportPlaylistCard />
+        </div>
+
+        {playlists.length === 0 ? (
+          <DashboardCard className="p-6">
+            <div className="text-sm font-semibold text-white">
+              No playlists yet
+            </div>
+            <div className="mt-1 text-sm text-white/60">
+              Import a YouTube playlist to get started.
+            </div>
+          </DashboardCard>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {playlists.map((p) => (
+              <PlaylistCard
+                key={p.id}
+                channelTitle={p.channelTitle}
+                id={p.id}
+                itemCount={p.itemCount}
+                thumbnail={p.thumbnail}
+                title={p.title}
+                status={p.status}
+                completedVideos={p.completedVideosCount}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
-      {playlists.length === 0 ? (
-        <DashboardCard className="p-6">
-          <div className="text-sm font-semibold text-white">
-            No playlists yet
-          </div>
-          <div className="mt-1 text-sm text-white/60">
-            Import a YouTube playlist to get started.
-          </div>
-        </DashboardCard>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {playlists.map((p) => (
-            <PlaylistCard
-              key={p.id}
-              channelTitle={p.channelTitle}
-              id={p.id}
-              itemCount={p.itemCount}
-              thumbnail={p.thumbnail}
-              title={p.title}
-              status={p.status}
-              completedVideos={p.completedVideosCount}
-            />
-          ))}
+      <div className="space-y-7 mt-10">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <SectionHeader
+            title="Enrolled Playlists"
+            subtitle="Enrolled creator playlists"
+          />
         </div>
-      )}
+
+        {creatorPlaylists.length === 0 ? (
+          <DashboardCard className="p-6">
+            <div className="text-sm font-semibold text-white">
+              No playlists yet
+            </div>
+            <div className="mt-1 text-sm text-white/60">
+              Enrolled into creator playlist to get started
+            </div>
+          </DashboardCard>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {creatorPlaylists.map((p) => (
+              <PlaylistCard
+                key={p.Playlist.id}
+                channelTitle={p.Playlist.channelTitle}
+                id={p.Playlist.id}
+                itemCount={p.Playlist.itemCount}
+                thumbnail={p.Playlist.thumbnail}
+                title={p.Playlist.title}
+                status={p.Playlist.status}
+                completedVideos={p.Playlist.completedVideosCount}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

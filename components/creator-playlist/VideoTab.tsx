@@ -1,69 +1,41 @@
 import { BarChart3, GripVertical, MoreHorizontal, Pencil } from "lucide-react";
 import { VideoThumbnail } from "./VideoThumbnail";
+import { PlaylistVideoType } from "@/types/playlist";
+import { getVideosByPlaylistIdService } from "@/server/services/video.service";
+import DashboardCard from "../learner-dashboard/DashboardCard";
 
-export function VideosTab() {
+export async function VideosTab({
+    playlistId
+}: {
+    playlistId: string
+}) {
 
-    const VIDEOS = [
-        {
-            id: '1',
-            number: '01',
-            title: "Why RAG is Dead (And What's Next)",
-            date: 'May 20, 2026',
-            views: '1.2K views',
-            learners: 254,
-            status: 'Published',
-            duration: '12:34',
-            color: 'from-red-600/80 to-orange-500/60',
-        },
-        {
-            id: '2',
-            number: '02',
-            title: 'The Problem with Traditional RAG',
-            date: 'May 18, 2026',
-            views: '980 views',
-            learners: 210,
-            status: 'Published',
-            duration: '15:48',
-            color: 'from-purple-600/80 to-pink-500/60',
-        },
-        {
-            id: '3',
-            number: '03',
-            title: 'Understanding Context Window Limits',
-            date: 'May 16, 2026',
-            views: '870 views',
-            learners: 189,
-            status: 'Published',
-            duration: '18:22',
-            color: 'from-emerald-600/80 to-teal-500/60',
-        },
-        {
-            id: '4',
-            number: '04',
-            title: 'Introducing the DEAD Framework',
-            date: 'May 14, 2026',
-            views: '1.1K views',
-            learners: 230,
-            status: 'Published',
-            duration: '14:10',
-            color: 'from-amber-600/80 to-yellow-500/60',
-        },
-        {
-            id: '5',
-            number: '05',
-            title: 'Building Smarter Data Pipelines',
-            date: 'May 12, 2026',
-            views: '750 views',
-            learners: 172,
-            status: 'Published',
-            duration: '16:05',
-            color: 'from-sky-600/80 to-blue-500/60',
-        },
-    ];
+    let vidoes: PlaylistVideoType[] = []
+    let errorMessage: string | null = null;
+
+    try {
+        vidoes = await getVideosByPlaylistIdService(playlistId)
+    } catch (error) {
+        console.error('Failed to fetch videos:', error);
+        errorMessage =
+            error instanceof Error ? error.message : 'Failed to fetch videos';
+    }
+
+    if (errorMessage) {
+        return (
+            <DashboardCard className="border border-red-500/20 bg-red-500/10 p-6">
+                <div className="text-sm font-semibold text-red-100">
+                    Could not load videos
+                </div>
+                <div className="mt-1 text-sm text-red-100/70">{errorMessage}</div>
+                {/* add a retry button here in case of error in future  */}
+            </DashboardCard>
+        );
+    }
 
     return (
         <div className="mt-4 space-y-2">
-            {VIDEOS.map((video) => (
+            {vidoes.map((video) => (
                 <div
                     key={video.id}
                     className="group flex items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 transition hover:border-white/10 hover:bg-white/[0.04]"
@@ -72,17 +44,14 @@ export function VideosTab() {
                         size={16}
                         className="flex-shrink-0 cursor-grab text-white/20 transition group-hover:text-white/40"
                     />
-                    <VideoThumbnail color={video.color} duration={video.duration} />
+                    <VideoThumbnail image={video.thumbnail} />
                     <div className="min-w-0 flex-1">
                         <div className="text-sm font-medium text-white">
-                            {video.number}. {video.title}
+                            {video.position}. {video.title}
                         </div>
                         <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-white/40">
-                            <span>{video.date}</span>
-                            <span className="h-1 w-1 rounded-full bg-white/20" />
-                            <span>{video.views}</span>
-                            <span className="h-1 w-1 rounded-full bg-white/20" />
-                            <span>{video.learners} learners</span>
+                            <span>{new Date(video.publishedAt).toLocaleString()}</span>
+
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
