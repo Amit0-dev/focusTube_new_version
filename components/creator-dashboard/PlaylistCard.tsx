@@ -4,7 +4,6 @@ import DashboardCard from '@/components/learner-dashboard/DashboardCard';
 import type { Playlist } from '@/types/playlist';
 import {
   Layers3,
-  Sparkles,
   Users2,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -14,14 +13,6 @@ export default function CreatorPlaylistCard({
 }: {
   playlist: Playlist;
 }) {
-
-  const quickStats = [
-    {
-      icon: Users2,
-      label: 'Learners',
-      value: 234,
-    },
-  ] as const;
 
   const router = useRouter()
 
@@ -48,11 +39,6 @@ export default function CreatorPlaylistCard({
             <Layers3 size={12} className="text-cyan-300" />
             {playlist.itemCount} videos
           </div>
-
-          <div className="absolute right-3 top-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/35 px-2.5 py-1 text-[11px] font-semibold text-white/85 backdrop-blur-md">
-            <Users2 size={12} className="text-cyan-300" />
-            {234} learners
-          </div>
         </div>
 
         <div className="relative mt-4 space-y-4">
@@ -65,23 +51,6 @@ export default function CreatorPlaylistCard({
               <span className="hidden h-1 w-1 rounded-full bg-white/30 sm:inline-flex" />
               <span className="text-white/45">Creator playlist space</span>
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-2">
-            {quickStats.map(({ icon: Icon, label, value }) => (
-              <div
-                key={label}
-                className="rounded-3xl border border-white/10 bg-white/5 px-3 py-3 shadow-inner shadow-black/10"
-              >
-                <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/45">
-                  <Icon size={12} className="text-cyan-300" />
-                  {label}
-                </div>
-                <div className="mt-2 text-lg font-semibold text-white">
-                  {value}
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </DashboardCard>

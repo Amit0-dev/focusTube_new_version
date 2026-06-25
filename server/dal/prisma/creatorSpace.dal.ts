@@ -19,3 +19,20 @@ export async function joinCreatorPlaylist(playlistId: string, userId: string) {
         }
     })
 }
+
+export async function getAllEnrolledUsersInCreatorPlaylist(playlistId: string) {
+    return await prisma.creatorSpace.findMany({
+        where: {
+            playlistId,
+        },
+        include: {
+            User: {
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                }
+            }
+        }
+    })
+}

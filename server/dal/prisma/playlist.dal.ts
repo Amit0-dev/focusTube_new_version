@@ -97,23 +97,3 @@ export async function getJoinedUserCountOfCreatorPlaylist(playlistId: string) {
     }
   })
 }
-
-export async function getJoinedUsersOfCreatorPlaylist(playlistId: string) {
-  return await prisma.creatorSpace.findMany({
-    where: {
-      Playlist: {
-        id: playlistId
-      }
-    },
-    include: {
-      User: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true
-        }
-      }
-    }
-  })
-}

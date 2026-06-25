@@ -37,8 +37,8 @@ export interface YtPlaylistItemResponse {
 
 
 export interface Video {
-    playlistId: string;
-    id: string;
+    playlistId?: string;
+    id?: string;
     kind: string;
     youtubeVideoId: string;
     title: string;

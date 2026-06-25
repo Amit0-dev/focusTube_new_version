@@ -88,3 +88,11 @@ export async function getAllPlaylists(userId: string) {
         }
     })
 }
+
+export async function getAllProgressOfPlaylist(playlistId: string) {
+    return await prisma.userPlaylistProgress.findMany({
+        where: {
+            playlistId
+        }
+    })
+}

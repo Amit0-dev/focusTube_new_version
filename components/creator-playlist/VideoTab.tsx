@@ -3,6 +3,7 @@ import { VideoThumbnail } from "./VideoThumbnail";
 import { getVideosByPlaylistIdService } from "@/server/services/video.service";
 import DashboardCard from "../learner-dashboard/DashboardCard";
 import { Video } from "@/types/video";
+import { AppError } from "@/lib/errors/appError";
 
 export async function VideosTab({
     playlistId
@@ -16,9 +17,7 @@ export async function VideosTab({
     try {
         vidoes = await getVideosByPlaylistIdService(playlistId)
     } catch (error) {
-        console.error('Failed to fetch videos:', error);
-        errorMessage =
-            error instanceof Error ? error.message : 'Failed to fetch videos';
+        errorMessage = error instanceof AppError ? error.message : "Failed to fetch creator playlists"
     }
 
     if (errorMessage) {
@@ -58,21 +57,9 @@ export async function VideosTab({
 
                         <button
                             type="button"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white/70"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white/70 cursor-pointer"
                         >
                             <Pencil size={14} />
-                        </button>
-                        <button
-                            type="button"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white/70"
-                        >
-                            <BarChart3 size={14} />
-                        </button>
-                        <button
-                            type="button"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white/70"
-                        >
-                            <MoreHorizontal size={14} />
                         </button>
                     </div>
                 </div>

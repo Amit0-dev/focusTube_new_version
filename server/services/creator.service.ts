@@ -1,8 +1,8 @@
 import { AppError } from "@/lib/errors/appError"
 import { getPlaylistById, getPlaylistsOwnByCreator } from "../dal/prisma/playlist.dal"
 import { findUserByClerkUserId, getUserById } from "../dal/prisma/user.dal"
-import { isUserAlreadyJoinedPlaylist, joinCreatorPlaylist } from "../dal/prisma/creatorSpace.dal"
-import { createUserPlaylistProgress } from "../dal/prisma/userPlaylistProgress.dal"
+import { getAllEnrolledUsersInCreatorPlaylist, isUserAlreadyJoinedPlaylist, joinCreatorPlaylist } from "../dal/prisma/creatorSpace.dal"
+import { createUserPlaylistProgress, getAllProgressOfPlaylist } from "../dal/prisma/userPlaylistProgress.dal"
 import { requireAuth } from "@/lib/auth/requireAuth"
 import { requireRole } from "@/lib/auth/requireRole"
 
@@ -77,4 +77,51 @@ export async function getPlaylistsOwnByCreatorService() {
     }
 
     return playlists;
+}
+
+export async function getJoinedUsersOfCreatorPlaylistService(playlistId: string) {
+    const { clerkUserId } = await requireRole(["creator"])
+
+    if (!clerkUserId) {
+        throw new AppError("Unauthorized", 401, "UNAUTHORIZED")
+    }
+
+    const user = await findUserByClerkUserId(clerkUserId);
+
+    if (!user) {
+        throw new AppError("Unauthorized", 401, "UNAUTHORIZED")
+    }
+
+    // first check this user have access to this playlist
+
+    const playlist = await getPlaylistById(playlistId)
+
+    if (!playlist) {
+        throw new AppError("Playlist Not Found", 404, "PLAYLIST_NOT_FOUND")
+    }
+
+    if (playlist.userId !== user.id) {
+        throw new AppError("You don't own this playlist", 403, "FORBIDDEN")
+    }
+
+    // now get all the enrolled users in this playlist
+    const enrolledUsers = await getAllEnrolledUsersInCreatorPlaylist(playlistId);
+
+    // now also fetch the progress of this playlist
+
+    const progress = await getAllProgressOfPlaylist(playlistId)
+
+    // now map progress with userid
+
+    const mappedProgress = new Map(progress.map(p => [p.userId, p]))
+
+    // now map enrolled user with their progress
+
+    const enrolledUsersWithProgress = enrolledUsers.map(e => ({
+        ...e,
+        progress: mappedProgress.get(e.User.id) ?? null,
+    }))
+
+    return enrolledUsersWithProgress;
+
 }
