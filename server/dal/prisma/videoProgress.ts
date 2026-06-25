@@ -1,16 +1,17 @@
 import prisma from '@/lib/prisma';
 
-// TODO: make videoId, playlistId and userId unique for using findUnique
 export async function getVideoProgress(
   videoId: string,
   userId: string,
   playlistId: string,
 ) {
-  return await prisma.videoProgress.findFirst({
+  return await prisma.videoProgress.findUnique({
     where: {
-      videoId,
-      playlistId,
-      userId,
+      videoId_userId_playlistId: {
+        videoId,
+        userId,
+        playlistId
+      }
     },
   });
 }

@@ -1,208 +1,90 @@
 import { requireAuth } from '@/lib/auth/requireAuth';
-import { playlistStatusMap } from '@/utils/role';
-
 import {
   getAllCreatorPlaylists,
-  getAllPlaylists,
   getPlaylistById,
-  getPlaylistByIdForJoin,
-  getUserEnrolledCreatorPlaylist,
-  isUserAlreadyJoinedPlaylist,
-  joinCreatorPlaylist,
-  updatePlaylistCompletedVideosCountById,
-  updatePlaylistStatusById,
 } from '../dal/prisma/playlist.dal';
-import { findUserByClerkUserId, getUserById } from '../dal/prisma/user.dal';
+import { findUserByClerkUserId } from '../dal/prisma/user.dal';
+import { AppError } from '@/lib/errors/appError';
+import { getAllPlaylists, getUserPlaylistProgress } from '../dal/prisma/userPlaylistProgress.dal';
 
 export async function getPlaylistOfCurrentUserService() {
   try {
     // TODO: add pagination and filtering
-    const { userId: clerkUserId } = await requireAuth();
+    const { userId: clerkUserId } = await requireAuth()
+
+    if (!clerkUserId) {
+      throw new AppError("Unauthorized", 401, "UNAUTHORIZED")
+    }
 
     const user = await findUserByClerkUserId(clerkUserId);
 
     if (!user) {
-      throw new Error('User not found');
+      throw new AppError("Unauthorized", 401, "UNAUTHORIZED")
     }
 
     const playlists = await getAllPlaylists(user.id);
 
     return playlists;
   } catch (error) {
-    console.error('Error in getPlaylistOfCurrentUserService - ', error);
-    throw new Error('Failed to fetch playlists');
+    throw new AppError("Failed to fetch playlists", 500, "FAILED_TO_FETCH_PLAYLISTS");
   }
 }
 
 export async function getPlaylistByIdService(playlistId: string) {
-  try {
-    const { userId: clerkUserId } = await requireAuth();
+  const { userId: clerkUserId } = await requireAuth()
 
-    const user = await findUserByClerkUserId(clerkUserId);
-
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    const playlist = await getPlaylistById(playlistId, user.id);
-
-    return playlist;
-  } catch (error) {
-    console.error('Error in getPlaylistByIdService - ', error);
-    throw new Error('Failed to fetch playlist');
+  if (!clerkUserId) {
+    throw new AppError("Unauthorized", 401, "UNAUTHORIZED")
   }
+
+  const user = await findUserByClerkUserId(clerkUserId);
+
+  if (!user) {
+    throw new AppError("Unauthorized", 401, "UNAUTHORIZED")
+  }
+
+  const playlist = await getPlaylistById(playlistId);
+  if (!playlist) {
+    throw new AppError("Playlist not found", 404, "PLAYLIST_NOT_FOUND")
+  }
+
+  // check current user have ownership of this playlist
+  // 1. Creator owns it directly
+  // 2. Learner has joined it (has progress)
+
+  const isOwner = playlist.userId === user.id;
+
+  if (!isOwner) {
+    const progress = await getUserPlaylistProgress(user.id, playlist.id)
+
+    if (!progress) {
+      throw new AppError("You don't have access to this playlist", 403, "ACCESS_DENIED")
+    }
+  }
+
+  return playlist;
 }
 
-export async function updatePlaylistByIdService(
-  playlistId: string,
-  userId: string,
-) {
-  try {
-    // first get the playlist
-    const playlist = await getPlaylistById(playlistId, userId);
-
-    if (!playlist) {
-      throw new Error('Playlist not found');
-    }
-
-    // increment the completed videos count
-    const updatedPlaylist = await updatePlaylistCompletedVideosCountById(
-      playlistId,
-      userId,
-    );
-
-    if (!updatedPlaylist) {
-      throw new Error('Failed to update playlist');
-    }
-
-    const { itemCount, completedVideosCount } = updatedPlaylist;
-
-    // if all videos are completed then mark the playlist as completed
-
-    if (completedVideosCount === itemCount) {
-      await updatePlaylistStatusById(
-        playlistId,
-        userId,
-        playlistStatusMap.completed,
-        new Date(),
-      );
-    }
-  } catch (error) {
-    console.error('Error in updatePlaylistByIdService - ', error);
-    throw new Error('Failed to update playlist');
-  }
-}
-
-export async function checkPlaylistBelongToCreatorService(playlistId: string) {
-  try {
-
-    const playlist = await getPlaylistByIdForJoin(playlistId)
-
-    if (!playlist) {
-      throw new Error('Playlist not found');
-    }
-
-    const playlistOwnerId = playlist.userId
-
-    const playlistOwner = await getUserById(playlistOwnerId)
-
-    if (playlistOwner?.role !== "CREATOR") {
-      throw new Error('Playlist does not belong to creator')
-    }
-
-    return {
-      playlist,
-      playlistOwner,
-      isPlaylistBelongToCreator: true
-    }
-
-  } catch (error) {
-    console.error('Error in checkPlaylistBelongToCreator - ', error);
-    throw new Error('Failed to check playlist');
-  }
-}
-
-export async function joinCreatorPlaylistService(playlistId: string, userId: string) {
-  try {
-
-    // check user is valid or not
-
-    const user = await getUserById(userId)
-
-    if (!user) {
-      throw new Error("User not found")
-    }
-
-    // check user is already join in playlist or not
-
-    const result = await isUserAlreadyJoinedPlaylist(playlistId, userId)
-
-    if (result) {
-      throw new Error("User is already joined in playlist")
-    }
-    // now create a record in db
-
-    const res = await joinCreatorPlaylist(playlistId, userId)
-
-    if (!res) {
-      throw new Error("Failed to join creator playlist")
-    }
-
-    return res
-
-  } catch (error) {
-    console.error('Error in joinCreatorPlaylist - ', error);
-    throw new Error('Failed to join creator playlist');
-  }
-}
-
+//TODO: Add a publish status to playlist model only show that playlist which is published: true
 export async function getAllCreatorPlaylistsService() {
-  try {
 
-    const { userId: clerkUserId } = await requireAuth();
+  const { userId: clerkUserId } = await requireAuth()
 
-    const user = await findUserByClerkUserId(clerkUserId);
-
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    const creatorPlaylist = await getAllCreatorPlaylists()
-
-    if (!creatorPlaylist) {
-      throw new Error('Creator playlist not found');
-    }
-
-    return creatorPlaylist
-
-
-  } catch (error) {
-    console.error('Error in getAllCreatorPlaylists - ', error);
-    throw new Error('Failed to fetch creator playlists');
+  if (!clerkUserId) {
+    throw new AppError("Unauthorized", 401, "UNAUTHORIZED")
   }
-}
 
-export async function getUserEnrolledCreatorPlaylistService() {
-  try {
+  const user = await findUserByClerkUserId(clerkUserId);
 
-    const { userId: clerkUserId } = await requireAuth();
-
-    const user = await findUserByClerkUserId(clerkUserId);
-
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    const enrolledPlaylists = await getUserEnrolledCreatorPlaylist(user.id);
-
-    if (!enrolledPlaylists) {
-      throw new Error('Enrolled playlists not found');
-    }
-
-    return enrolledPlaylists
-
-  } catch (error) {
-    console.error('Error in getUserEnrolledCreatorPlaylistService - ', error);
-    throw new Error('Failed to fetch enrolled creator playlists');
+  if (!user) {
+    throw new AppError("Unauthorized", 401, "UNAUTHORIZED")
   }
+
+  const creatorPlaylist = await getAllCreatorPlaylists(user.id)
+
+  if (!creatorPlaylist) {
+    throw new AppError("Creator playlists not found", 404, "CREATOR_PLAYLISTS_NOT_FOUND")
+  }
+
+  return creatorPlaylist
 }

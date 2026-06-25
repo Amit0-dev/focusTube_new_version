@@ -1,4 +1,6 @@
+import { handleApiError } from '@/lib/api/handleApiError';
 import { requireRole } from '@/lib/auth/requireRole';
+import { AppError } from '@/lib/errors/appError';
 import { importPlaylistService } from '@/server/services/playlistImport.service';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -31,40 +33,27 @@ function extractPlaylistId(url: string): string | null {
 
 export async function POST(req: NextRequest) {
   try {
-    const { clerkUserId } = await requireRole(['creator', 'learner']);
+    const { clerkUserId } = await requireRole(['creator', 'learner', 'admin']);
 
     const { playlistUrl } = await req.json();
 
     if (!playlistUrl) {
-      return NextResponse.json(
-        { error: 'Playlist URL is required' },
-        { status: 400 },
-      );
+      throw new AppError("Playlist URL is required", 400, "BAD_REQUEST")
     }
 
     const playlistId = extractPlaylistId(playlistUrl);
 
     if (!playlistId) {
-      return NextResponse.json(
-        { error: 'Invalid YouTube playlist URL' },
-        { status: 400 },
-      );
+      throw new AppError("Invalid playlist URL", 400, "BAD_REQUEST")
     }
 
-    await importPlaylistService({ clerkUserId, playlistId });
+    const result = await importPlaylistService({ clerkUserId, playlistId });
 
     return NextResponse.json(
-      { message: 'Playlist imported successfully' },
-      { status: 200 },
+      { message: 'Playlist imported successfully', success: true, playlist: result.createdPlaylist },
+      { status: 200 }
     );
   } catch (error) {
-    console.error('Error importing playlist:', error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : 'Failed to import playlist',
-      },
-      { status: 500 },
-    );
+    return handleApiError(error)
   }
 }

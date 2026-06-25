@@ -1,8 +1,8 @@
 import { BarChart3, GripVertical, MoreHorizontal, Pencil } from "lucide-react";
 import { VideoThumbnail } from "./VideoThumbnail";
-import { PlaylistVideoType } from "@/types/playlist";
 import { getVideosByPlaylistIdService } from "@/server/services/video.service";
 import DashboardCard from "../learner-dashboard/DashboardCard";
+import { Video } from "@/types/video";
 
 export async function VideosTab({
     playlistId
@@ -10,7 +10,7 @@ export async function VideosTab({
     playlistId: string
 }) {
 
-    let vidoes: PlaylistVideoType[] = []
+    let vidoes: Video[] = []
     let errorMessage: string | null = null;
 
     try {

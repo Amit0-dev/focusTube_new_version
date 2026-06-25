@@ -1,77 +1,72 @@
+import { AppError } from '@/lib/errors/appError';
 import {
   createNote,
   deleteNote,
   findNoteById,
   updateNote,
 } from '../dal/prisma/note.dal';
-import { findUserByClerkUserId } from '../dal/prisma/user.dal';
 
 export async function createNoteService(args: {
-  clerkUserId: string;
+  userId: string;
   content: string;
   timestamp: number;
   playlistId: string;
   videoId: string;
 }) {
-  const user = await findUserByClerkUserId(args.clerkUserId);
+  const response = await createNote(
+    args.playlistId,
+    args.videoId,
+    args.content,
+    args.userId,
+    args.timestamp
+  );
 
-  if (!user) {
-    throw new Error('User not found');
+  if (!response || !response.id) {
+    throw new AppError("Failed to create note", 500, "FAILED_TO_CREATE_NOTE")
   }
 
-  try {
-    const response = await createNote(
-      args.playlistId,
-      args.videoId,
-      args.content,
-      user.id,
-      args.timestamp
-    );
+  return response;
 
-    if (!response || !response.id) {
-      throw new Error('Failed to create note');
-    }
-  } catch (error) {
-    console.error('Error creating note:', error);
-    throw new Error('Failed to create note');
-  }
 }
 
-// TODO: also pass userId and check if the note belongs to the user before allowing update or delete
-export async function updateNoteService(noteId: string, content: string) {
-  try {
-    const existingNote = await findNoteById(noteId);
+export async function updateNoteService(noteId: string, content: string, userId: string) {
 
-    if (!existingNote) {
-      throw new Error('Note not found');
-    }
+  const existingNote = await findNoteById(noteId);
 
-    const response = await updateNote(noteId, content);
-
-    if (!response || !response.id) {
-      throw new Error('Failed to update note');
-    }
-  } catch (error) {
-    console.error('Error updating note:', error);
-    throw new Error('Failed to update note');
+  if (!existingNote) {
+    throw new AppError("Note not found", 404, "NOTE_NOT_FOUND")
   }
+
+  if (existingNote.userId !== userId) {
+    throw new AppError("Unauthorized", 401, "UNAUTHORIZED")
+  }
+
+  const response = await updateNote(noteId, content);
+
+  if (!response || !response.id) {
+    throw new AppError("Failed to update note", 500, "FAILED_TO_UPDATE_NOTE")
+  }
+
+  return response;
 }
 
-export async function deleteNoteService(noteId: string) {
-  try {
-    const existingNote = await findNoteById(noteId);
+export async function deleteNoteService(noteId: string, userId: string) {
 
-    if (!existingNote) {
-      throw new Error('Note not found');
-    }
+  const existingNote = await findNoteById(noteId);
 
-    const response = await deleteNote(noteId);
-
-    if (!response || !response.id) {
-      throw new Error('Failed to delete note');
-    }
-  } catch (error) {
-    console.error('Error deleting note:', error);
-    throw new Error('Failed to delete note');
+  if (!existingNote) {
+    throw new AppError("Note not found", 404, "NOTE_NOT_FOUND")
   }
+
+  if (existingNote.userId !== userId) {
+    throw new AppError("Unauthorized", 401, "UNAUTHORIZED")
+  }
+
+  const response = await deleteNote(noteId);
+
+  if (!response || !response.id) {
+    throw new AppError("Failed to delete note", 500, "FAILED_TO_DELETE_NOTE")
+  }
+
+  return response;
 }

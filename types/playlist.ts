@@ -1,10 +1,12 @@
-interface Thumbnail {
+import { PlaylistStatus } from "@/generated/prisma/enums";
+
+export interface Thumbnail {
   url: string;
   width: number;
   height: number;
 }
 
-export interface PlaylistResponseType {
+export interface YtPlaylistResponse {
   kind: string;
   etag: string;
   id: string;
@@ -34,54 +36,6 @@ export interface PlaylistResponseType {
   };
 }
 
-export interface PlaylistItemResponseType {
-  kind: string;
-  etag: string;
-  id: string;
-  snippet: {
-    publishedAt: Date;
-    channelId: string;
-    title: string;
-    description: string;
-    thumbnails: {
-      default: Thumbnail;
-      medium: Thumbnail;
-      high: Thumbnail;
-      standard: Thumbnail;
-      maxres: Thumbnail;
-    };
-    channelTitle: string;
-    playlistId: string;
-    position: number;
-    resourceId: {
-      kind: string;
-      videoId: string;
-    };
-    videoOwnerChannelTitle: string;
-    videoOwnerChannelId: string;
-  };
-  contentDetails: {
-    videoId: string;
-    videoPublishedAt: Date;
-  };
-  status: {
-    privacyStatus: string;
-  };
-}
-
-export interface PlaylistVideoType {
-  id: string;
-  kind: string;
-  youtubeVideoId: string;
-  title: string;
-  description: string | null;
-  channelId: string;
-  publishedAt: Date;
-  thumbnail: string;
-  channelTitle: string;
-  position: number;
-}
-
 export interface Playlist {
   id: string;
   youtubePlaylistId: string;
@@ -94,6 +48,25 @@ export interface Playlist {
   channelTitle: string;
   kind: string;
   itemCount: number;
-  status: 'IN_PROGRESS' | 'NEW' | 'COMPLETED';
+}
+
+export interface LearnerPlaylist {
   completedVideosCount: number;
+  status: PlaylistStatus;
+  completedAt: Date | null;
+  Playlist: {
+    id: string;
+    userId: string;
+    createdAt: Date;
+    updatedAt: Date;
+    youtubePlaylistId: string;
+    title: string;
+    description: string | null;
+    channelId: string;
+    publishedAt: Date;
+    thumbnail: string;
+    channelTitle: string;
+    kind: string;
+    itemCount: number;
+  };
 }

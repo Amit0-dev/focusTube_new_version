@@ -1,10 +1,14 @@
-import { requireRole } from '@/lib/auth/requireRole';
-import { getNotesByVideoId } from '@/server/dal/prisma/note.dal';
+import { handleApiError } from '@/lib/api/handleApiError';
+import { requireAuth } from '@/lib/auth/requireAuth';
+import { AppError } from '@/lib/errors/appError';
+import { getNotes } from '@/server/dal/prisma/note.dal';
+import { findUserByClerkUserId } from '@/server/dal/prisma/user.dal';
 import { createNoteService } from '@/server/services/note.service';
+import { checkVideoAndPlaylist } from '@/server/services/videoProgress.service';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-const noteSchema = z.object({
+const createNoteSchema = z.object({
   content: z.string().min(1, 'Content is required'),
   timestamp: z.number().nonnegative('Timestamp must be a non-negative number'),
   playlistId: z.string(),
@@ -20,33 +24,33 @@ export async function POST(req: NextRequest, res: NextResponse) {
   try {
     const { content, timestamp, playlistId, videoId } = await req.json();
 
-    const result = noteSchema.safeParse({ content, timestamp, playlistId, videoId });
+    const result = createNoteSchema.safeParse({ content, timestamp, playlistId, videoId });
 
     if (!result.success) {
       if (result.error instanceof z.ZodError) {
-        return NextResponse.json(
-          { error: result.error.message },
-          { status: 400 },
-        );
+        throw new AppError(result.error.message, 400, 'INVALID_CREATE_NOTE_INPUT');
       }
     }
 
-    // now check user is logged in and has the right role
-
-    const { clerkUserId } = await requireRole(['learner']);
+    const { userId: clerkUserId } = await requireAuth()
 
     if (!clerkUserId) {
-      return NextResponse.json(
-        {
-          error: 'Unauthorized',
-        },
-        { status: 401 },
-      );
+      throw new AppError("Unauthorized", 401, "UNAUTHORIZED")
     }
+
+    const user = await findUserByClerkUserId(clerkUserId);
+
+    if (!user) {
+      throw new AppError("Unauthorized", 401, "UNAUTHORIZED")
+    }
+
+    // check videoId and playlistId are valid and video belongs to playlist or not
+
+    const { playlist, video } = await checkVideoAndPlaylist(videoId, playlistId, user.id);
 
     // now save the note into db
     await createNoteService({
-      clerkUserId,
+      userId: user.id,
       playlistId,
       videoId,
       content,
@@ -54,15 +58,11 @@ export async function POST(req: NextRequest, res: NextResponse) {
     });
 
     return NextResponse.json(
-      { message: 'Note created successfully' },
+      { message: 'Note created successfully', success: true },
       { status: 200 },
     );
   } catch (error) {
-    console.log('Error creating note: ', error);
-    return NextResponse.json(
-      { error: 'Failed to create note' },
-      { status: 500 },
-    );
+    return handleApiError(error)
   }
 }
 
@@ -72,44 +72,39 @@ export async function GET(req: NextRequest, res: NextResponse) {
     const playlistId = req.nextUrl.searchParams.get('playlistId');
 
     if (!videoId || !playlistId) {
-      return NextResponse.json(
-        { error: 'videoId and playlistId are required' },
-        { status: 400 },
-      );
+      throw new AppError("Video ID and Playlist ID are required", 400, "VIDEO_ID_AND_PLAYLIST_ID_ARE_REQUIRED")
     }
 
     const result = getNotesSchema.safeParse({ videoId, playlistId });
 
     if (!result.success) {
       if (result.error instanceof z.ZodError) {
-        return NextResponse.json(
-          { error: result.error.message },
-          { status: 400 },
-        );
+        throw new AppError(result.error.message, 400, 'INVALID_GET_NOTE_INPUT');
       }
     }
 
-    const { clerkUserId } = await requireRole(['learner']);
+    const { userId: clerkUserId } = await requireAuth()
 
     if (!clerkUserId) {
-      return NextResponse.json(
-        {
-          error: 'Unauthorized',
-        },
-        { status: 401 },
-      );
+      throw new AppError("Unauthorized", 401, "UNAUTHORIZED")
     }
 
-    const notes = await getNotesByVideoId(videoId);
+    const user = await findUserByClerkUserId(clerkUserId);
+
+    if (!user) {
+      throw new AppError("Unauthorized", 401, "UNAUTHORIZED")
+    }
+
+    // check videoId and playlistId are valid and video belongs to playlist or not
+
+    const { playlist, video } = await checkVideoAndPlaylist(videoId, playlistId, user.id);
+
+    const notes = await getNotes(videoId, user.id);
     return NextResponse.json(
-      { messages: 'Notes fetched successfully', notes },
+      { messages: 'Notes fetched successfully', success: true, notes },
       { status: 200 },
     );
   } catch (error) {
-    console.log('Error fetching notes: ', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch notes' },
-      { status: 500 },
-    );
+    return handleApiError(error)
   }
 }

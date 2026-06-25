@@ -5,17 +5,17 @@ import { getPlaylistOfCurrentUserService } from '@/server/services/playlist.serv
 import type { Playlist } from '@/types/playlist';
 
 import CreatorPlaylistCard from './PlaylistCard';
+import { getPlaylistsOwnByCreatorService } from '@/server/services/creator.service';
+import { AppError } from '@/lib/errors/appError';
 
 export default async function CreatorPlaylist() {
   let playlists: Playlist[] = [];
   let errorMessage: string | null = null;
 
   try {
-    playlists = await getPlaylistOfCurrentUserService();
+    playlists = await getPlaylistsOwnByCreatorService();
   } catch (error) {
-    console.error('Failed to fetch playlists:', error);
-    errorMessage =
-      error instanceof Error ? error.message : 'Failed to fetch playlists';
+    errorMessage = error instanceof AppError ? error.message : "Failed to fetch creator playlists"
   }
 
   if (errorMessage) {
@@ -53,7 +53,7 @@ export default async function CreatorPlaylist() {
                 metrics, shared sessions, and a polished management view.
               </div>
             </div>
-           
+
           </div>
         </DashboardCard>
       ) : (

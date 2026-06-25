@@ -12,7 +12,8 @@ export async function apiFetch<T>(
   });
 
   if (!response.ok) {
-    throw new Error('API request failed');
+    const data = await response.json();
+    throw new Error(data.error || 'API request failed');
   }
 
   return response.json();

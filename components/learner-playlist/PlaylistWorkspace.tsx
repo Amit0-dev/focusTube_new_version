@@ -241,22 +241,20 @@ export default function PlaylistWorkspace({
                       key={video.youtubeVideoId}
                       type="button"
                       onClick={() => setActiveVideoId(video.youtubeVideoId)}
-                      className={`group flex w-full items-center gap-2.5 rounded-2xl border px-2.5 py-2.5 text-left transition sm:gap-3 sm:px-3 sm:py-3 ${
-                        isCompleted
+                      className={`group flex w-full items-center gap-2.5 rounded-2xl border px-2.5 py-2.5 text-left transition sm:gap-3 sm:px-3 sm:py-3 ${isCompleted
                           ? isActive
                             ? 'border-emerald-300/45 bg-linear-to-r from-emerald-500/18 via-emerald-400/12 to-teal-300/10 shadow-lg shadow-emerald-500/10'
                             : 'border-emerald-400/25 bg-linear-to-r from-emerald-500/12 via-emerald-400/8 to-teal-300/6 hover:border-emerald-300/40 hover:bg-emerald-400/12'
                           : isActive
                             ? 'border-orange-300/40 bg-linear-to-r from-orange-500/15 to-amber-300/10 shadow-lg shadow-orange-500/10'
                             : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
-                      }`}
+                        }`}
                     >
                       <div
-                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                          isCompleted
+                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${isCompleted
                             ? 'bg-emerald-400/15 text-emerald-100 ring-1 ring-emerald-300/25'
                             : 'text-white/50'
-                        }`}
+                          }`}
                       >
                         {video.position + 1}
                       </div>
@@ -487,7 +485,7 @@ export default function PlaylistWorkspace({
                     <div className="mt-2 flex items-center justify-end pl-2">
                       <button
                         type="button"
-                        onClick={() => {}}
+                        onClick={() => { }}
                         className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-black/20 px-2 py-1 text-[10px] text-white/70 opacity-80 transition hover:bg-white/10 hover:opacity-100"
                       >
                         <Trash2 size={11} />

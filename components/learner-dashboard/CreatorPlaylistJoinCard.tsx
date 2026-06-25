@@ -3,43 +3,64 @@
 import { useState } from "react";
 import DashboardCard from "./DashboardCard";
 import { apiFetch } from "@/lib/api/apiFetch";
+import { Spinner } from "@heroui/react";
+import { useRouter } from "next/navigation";
 
-export default function CreatorPlaylistJoinCard(playlist: {
-    id: string;
-    title: string;
-    channelTitle: string;
-    thumbnail: string | null;
-    itemCount: number;
-    userId: string
-}) {
+type CreatorPlaylistJoinCardProps = {
+    playlist: {
+        id: string;
+        title: string;
+        channelTitle: string;
+        thumbnail: string | null;
+        itemCount: number;
+    };
+};
 
-    const [loading, setLoading] = useState(false)
+export default function CreatorPlaylistJoinCard({
+    playlist,
+}: CreatorPlaylistJoinCardProps) {
+
+    const [loading, setLoading] = useState<boolean>(false)
+    const [error, setError] = useState<string | null>(null)
+
+    const router = useRouter()
 
     async function joinPlaylist() {
         try {
             setLoading(true)
+            setError(null)
             const response: any = await apiFetch(
                 `/api/creator/playlist/join`,
                 {
                     method: 'POST',
                     body: JSON.stringify({
                         playlistId: playlist.id,
-                        userId: playlist.userId
                     }),
                 },
             );
+            console.log('join playlist response:', response);
 
-            if (!response) {
-                throw new Error('Failed to join playlist');
-            }
+            router.push("/learner/?tab=playlists")
 
         } catch (error) {
-            if (error instanceof Error) {
-                throw new Error(error.message);
-            }
-
-            throw new Error('Failed to join playlist');
+            setError(error instanceof Error ? error.message : 'Failed to join playlist');
+        } finally {
+            setLoading(false);
         }
+    }
+
+    if (error) {
+
+        return (
+            <DashboardCard className="border border-red-500/20 bg-red-500/10 p-6">
+                <div className="text-sm font-semibold text-red-100">
+                    Could not load creator playlist
+                </div>
+                <div className="mt-1 text-sm text-red-100/70">{error}</div>
+                {/* add a retry button here in case of error in future  */}
+            </DashboardCard>
+        );
+
     }
 
     return (
@@ -81,10 +102,14 @@ export default function CreatorPlaylistJoinCard(playlist: {
                 <button
                     onClick={() => joinPlaylist()}
                     type="button"
+                    disabled={loading}
                     suppressHydrationWarning
                     className="inline-flex w-full items-center justify-center rounded-2xl bg-linear-to-r from-orange-500 to-amber-400 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-orange-500/20 transition hover:opacity-95 sm:w-auto"
                 >
-                    Join Now
+                    {loading ? <div className="flex items-center gap-2 justify-center">
+                        <Spinner color="current" size="sm" />
+                        <p>Joining...</p>
+                    </div> : 'Join Now'}
                 </button>
             </div>
 

@@ -15,7 +15,7 @@ const DashboardRedirectButton = () => {
     return null;
   }
 
-  const role = user.publicMetadata.role as string;
+  const role = user?.publicMetadata?.role as string;
 
   if (!role) {
     throw new Error('User role is not defined in public metadata');

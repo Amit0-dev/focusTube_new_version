@@ -3,10 +3,14 @@ import prisma from '@/lib/prisma';
 
 export async function findPlaylistByYoutubePlaylistId(
   youtubePlaylistId: string,
+  userId: string
 ) {
   const playlist = await prisma.playlist.findUnique({
     where: {
-      youtubePlaylistId,
+      youtubePlaylistId_userId: {
+        youtubePlaylistId,
+        userId
+      }
     },
   });
 
@@ -38,49 +42,19 @@ export async function createPlaylist(
     kind: string;
   }>,
 ) {
-  try {
-    const createdPlaylist = await prisma.playlist.create({
-      data: {
-        ...playlistData,
-        video: {
-          createMany: {
-            data: videosData,
-          },
+  return await prisma.playlist.create({
+    data: {
+      ...playlistData,
+      video: {
+        createMany: {
+          data: videosData,
         },
       },
-    });
-
-    return createdPlaylist;
-  } catch (error) {
-    console.error('Error creating playlist:', error);
-    throw new Error('Failed to create playlist');
-  }
-}
-
-export async function getAllPlaylists(clerkUserId: string) {
-  const playlists = await prisma.playlist.findMany({
-    where: {
-      userId: clerkUserId,
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
-  return playlists;
-}
-
-export async function getPlaylistById(playlistId: string, userId: string) {
-  return await prisma.playlist.findUnique({
-    where: {
-      id: playlistId,
-      User: {
-        id: userId,
-      },
     },
   });
 }
 
-export async function getPlaylistByIdForJoin(playlistId: string) {
+export async function getPlaylistById(playlistId: string) {
   return await prisma.playlist.findUnique({
     where: {
       id: playlistId,
@@ -88,90 +62,32 @@ export async function getPlaylistByIdForJoin(playlistId: string) {
   });
 }
 
-export async function updatePlaylistStatusById(
-  playlistId: string,
-  userId: string,
-  status: PlaylistStatus,
-  completedAt: Date,
-) {
-  return await prisma.playlist.update({
-    where: {
-      id: playlistId,
-      User: {
-        id: userId,
-      },
-    },
-    data: {
-      status,
-      completedAt,
-    },
-  });
-}
-
-export async function updatePlaylistCompletedVideosCountById(
-  playlistId: string,
-  userId: string,
-) {
-  return await prisma.playlist.update({
-    where: {
-      id: playlistId,
-      User: {
-        id: userId,
-      },
-    },
-    data: {
-      completedVideosCount: {
-        increment: 1,
-      },
-    },
-  });
-}
-
-export async function markPlaylistAsInProgress(
-  playlistId: string,
-  userId: string,
-) {
-  return await prisma.playlist.update({
-    where: {
-      id: playlistId,
-      User: {
-        id: userId,
-      },
-    },
-    data: {
-      status: PlaylistStatus.IN_PROGRESS,
-    },
-  });
-}
-
-export async function joinCreatorPlaylist(playlistId: string, userId: string) {
-  return await prisma.creatorSpace.create({
-    data: {
-      userId,
-      playlistId
-    }
-  })
-}
-
-export async function isUserAlreadyJoinedPlaylist(playlistId: string, userId: string) {
-  return await prisma.creatorSpace.findFirst({
-    where: {
-      playlistId,
-      userId,
-    }
-  })
-}
-
-export async function getAllCreatorPlaylists() {
+export async function getAllCreatorPlaylists(userId: string) {
   return await prisma.playlist.findMany({
     where: {
       User: {
         role: "CREATOR"
+      },
+      NOT: {
+        UserPlaylistProgress: {
+          some: {
+            userId: userId
+          }
+        }
       }
     }
   })
 }
 
+export async function getPlaylistsOwnByCreator(userId: string) {
+  return await prisma.playlist.findMany({
+    where: {
+      userId
+    }
+  })
+}
+
+// TODO: need to recheck again..
 export async function getJoinedUserCountOfCreatorPlaylist(playlistId: string) {
   return await prisma.creatorSpace.count({
     where: {
@@ -198,17 +114,6 @@ export async function getJoinedUsersOfCreatorPlaylist(playlistId: string) {
           role: true
         }
       }
-    }
-  })
-}
-
-export async function getUserEnrolledCreatorPlaylist(userId: string) {
-  return await prisma.creatorSpace.findMany({
-    where: {
-      userId
-    },
-    include: {
-      Playlist: true
     }
   })
 }

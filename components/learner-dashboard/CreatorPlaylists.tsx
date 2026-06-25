@@ -3,32 +3,18 @@ import { Playlist } from "@/types/playlist"
 import DashboardCard from "./DashboardCard";
 import SectionHeader from "./SectionHeader";
 import CreatorPlaylistJoinCard from "./CreatorPlaylistJoinCard";
-import { auth } from '@clerk/nextjs/server';
-import { findUserByClerkUserId } from "@/server/dal/prisma/user.dal";
+import { AppError } from "@/lib/errors/appError";
 
 export default async function CreatorPlaylists() {
 
     let playlists: Playlist[] = []
     let errorMessage: string | null = null;
 
-    const { userId: clerkUserId } = await auth()
-
-    if (!clerkUserId) {
-        throw new Error("User not found")
-    }
-
-    const user = await findUserByClerkUserId(clerkUserId)
-
-    if (!user) {
-        throw new Error("User not found")
-    }
 
     try {
         playlists = await getAllCreatorPlaylistsService()
     } catch (error) {
-        console.error('Failed to fetch creator playlists:', error);
-        errorMessage =
-            error instanceof Error ? error.message : 'Failed to fetch creator playlists';
+        errorMessage = error instanceof AppError ? error.message : "Failed to fetch creator playlists"
     }
 
     if (errorMessage) {
@@ -65,7 +51,10 @@ export default async function CreatorPlaylists() {
             ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {playlists.map((playlist) => (
-                        <CreatorPlaylistJoinCard key={playlist.id} channelTitle={playlist.channelTitle} id={playlist.id} itemCount={playlist.itemCount} thumbnail={playlist.thumbnail} title={playlist.title} userId={user.id} />
+                        <CreatorPlaylistJoinCard
+                            key={playlist.id}
+                            playlist={playlist}
+                        />
                     ))}
                 </div>
             )}

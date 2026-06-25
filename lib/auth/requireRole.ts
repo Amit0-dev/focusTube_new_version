@@ -1,3 +1,4 @@
+import { AppError } from '../errors/appError';
 import { requireAuth } from './requireAuth';
 
 export async function requireRole(allowedRoles: string[]) {
@@ -6,7 +7,7 @@ export async function requireRole(allowedRoles: string[]) {
   const userRole = sessionClaims?.metadata?.role?.toString().toLowerCase();
 
   if (!userRole || !allowedRoles.includes(userRole)) {
-    throw new Error('Forbidden');
+    throw new AppError("You are not authorized to perform this action", 403, "FORBIDDEN")
   }
 
   return {

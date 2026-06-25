@@ -1,9 +1,11 @@
+import { AppError } from '@/lib/errors/appError';
 import { fetchPlaylist, fetchPlaylistVideos } from '../api/youtube.api';
 import {
   createPlaylist,
   findPlaylistByYoutubePlaylistId,
 } from '../dal/prisma/playlist.dal';
 import { findUserByClerkUserId } from '../dal/prisma/user.dal';
+import { createUserPlaylistProgress } from '../dal/prisma/userPlaylistProgress.dal';
 
 export async function importPlaylistService(args: {
   clerkUserId: string;
@@ -14,25 +16,26 @@ export async function importPlaylistService(args: {
   const user = await findUserByClerkUserId(args.clerkUserId);
 
   if (!user) {
-    throw new Error('User not found');
+    throw new AppError("User not found", 404, "USER_NOT_FOUND")
   }
 
-  // check wheather playlist exists or not with this playlistId or not
+  // check wheather playlist exists with this playlistId in db
 
   const existingPlaylist = await findPlaylistByYoutubePlaylistId(
     args.playlistId,
+    user.id
   );
 
   if (existingPlaylist) {
-    throw new Error('Playlist already exists');
+    throw new AppError("Playlist already exists", 409, "PLAYLIST_ALREADY_EXISTS")
   }
 
   // now fetch the playlist through yt apis
 
   const playlistResponse = await fetchPlaylist({ playlistId: args.playlistId });
 
-  if (!playlistResponse?.length) {
-    throw new Error('Invalid response');
+  if (!playlistResponse) {
+    throw new AppError("Invalid playlist response", 400, "INVALID_PLAYLIST_RESPONSE")
   }
 
   const playlistItem = playlistResponse[0];
@@ -40,11 +43,6 @@ export async function importPlaylistService(args: {
   // now fetch the videos
 
   const videos = await fetchPlaylistVideos({ playlistId: args.playlistId });
-
-  console.log(
-    `Video fetched - ${playlistItem.snippet.title} : `,
-    videos.length,
-  );
 
   // now call dal to save data into db
 
@@ -76,11 +74,22 @@ export async function importPlaylistService(args: {
     );
 
     if (!createdPlaylist) {
-      throw new Error('Failed to create playlist');
+      throw new AppError("Failed to import playlist", 500, "FAILED_TO_IMPORT_PLAYLIST")
+    }
+
+    // now create UserPlaylistProgress for only learner
+
+    if (user.role === "LEARNER") {
+      await createUserPlaylistProgress(user.id, createdPlaylist.id)
+    }
+
+    return {
+      createdPlaylist
     }
   } catch (error) {
-    console.error('Error in importPlaylistService: ', error);
-
-    throw new Error('Failed to import playlist');
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError("Failed to import playlist", 500, "FAILED_TO_IMPORT_PLAYLIST")
   }
 }

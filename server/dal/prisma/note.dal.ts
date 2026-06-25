@@ -20,10 +20,11 @@ export async function createNote(
   return note;
 }
 
-export async function getNotesByVideoId(videoId: string) {
+export async function getNotes(videoId: string, userId: string) {
   return await prisma.note.findMany({
     where: {
       videoId,
+      userId
     },
     orderBy: {
       createdAt: 'desc',

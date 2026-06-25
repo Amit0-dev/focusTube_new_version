@@ -25,9 +25,9 @@ const PlaylistCard = (p: {
   const progressValue =
     p.itemCount > 0 && p.completedVideos !== undefined
       ? Math.min(
-          100,
-          Math.max(0, Math.round((completedVideos / p.itemCount) * 100)),
-        )
+        100,
+        Math.max(0, Math.round((completedVideos / p.itemCount) * 100)),
+      )
       : 0;
 
   console.log(
